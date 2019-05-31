@@ -118,6 +118,9 @@ func (a *Args) parseField(sf reflect.StructField) {
 	if c != "" {
 		f.Choices = strings.Split(c, ",")
 	}
+	for i, c := range f.Choices {
+		f.Choices[i] = strings.TrimSpace(c)
+	}
 
 	// Get boolean options
 	f.parseOpts(sf.Tag.Get("opt"))
@@ -126,6 +129,9 @@ func (a *Args) parseField(sf reflect.StructField) {
 		c = sf.Tag.Get("aliases")
 		if c != "" {
 			f.Aliases = strings.Split(c, ",")
+		}
+		for i, c := range f.Aliases {
+			f.Aliases[i] = strings.TrimSpace(c)
 		}
 		a.commands[f.CommandName] = f
 		for _, x := range f.Aliases {
