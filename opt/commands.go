@@ -1,6 +1,8 @@
 package opt
 
-import "errors"
+import (
+	"errors"
+)
 
 // Runner is the interface for tool commands to conform to.
 type Runner interface {
