@@ -6,17 +6,19 @@ import (
 	"strings"
 
 	"github.com/Urethramancer/signor/log"
+	"github.com/Urethramancer/signor/stringer"
 )
 
 // Args gets options and commands parsed into it.
 type Args struct {
-	st          reflect.Value
-	Program     string
-	shortFlags  map[string]*Flag
-	longFlags   map[string]*Flag
-	commands    map[string]*Flag
-	commandlist []*Flag
-	groups      map[string][]*Flag
+	st             reflect.Value
+	Program        string
+	short          map[string]*Flag
+	long           map[string]*Flag
+	commands       map[string]*Flag
+	commandlist    []*Flag
+	positionalList []*Flag
+	groups         map[string][]*Flag
 	// groupOrder is in the order of group tags encountered.
 	groupOrder []string
 	Remaining  []string
@@ -29,12 +31,15 @@ const (
 
 // Usage printout.
 func (a *Args) Usage() {
-	var b strings.Builder
-	b.WriteString("Usage:\n  ")
-	b.WriteString(os.Args[0])
-	c := len(a.shortFlags) + len(a.longFlags)
+	var b stringer.Stringer
+	b.WriteStrings("Usage:\n  ", os.Args[0])
+	c := len(a.short) + len(a.long)
 	if c > 0 {
-		b.WriteString(" [OPTION]...")
+		if c > 1 {
+			b.WriteString(" [OPTION]...")
+		} else {
+			b.WriteString(" [OPTION]")
+		}
 	}
 	if len(a.commandlist) > 0 {
 		b.WriteString(" [COMMAND]")
@@ -48,20 +53,28 @@ func (a *Args) Usage() {
 				b.WriteString("Application options:\n")
 			}
 		} else {
-			b.WriteString("\n")
-			b.WriteString(gn)
-			b.WriteString(":\n")
+			b.WriteStrings("\n", gn, ":\n")
 		}
 		for _, f := range flags {
 			vars, help := f.UsageString()
-			b.WriteString(vars)
-			b.WriteString("\t\t")
+			b.WriteStrings(vars, "\t\t")
 			if len(vars) < 8 {
 				b.WriteString("\t")
 			}
-			b.WriteString(help)
-			b.WriteString("\n")
+			b.WriteStrings(help, "\n")
 		}
+	}
+
+	if len(a.commandlist) > 0 {
+		b.WriteString("\nCommands:\n")
+	}
+	for _, f := range a.commandlist {
+		vars, help := f.UsageString()
+		b.WriteStrings(vars, "\t\t")
+		if len(vars) < 8 {
+			b.WriteString("\t")
+		}
+		b.WriteStrings(help, "\n")
 	}
 	log.Default.Msg(b.String())
 }
@@ -76,8 +89,8 @@ func Parse(data interface{}) *Args {
 
 func newArgs(in []string) *Args {
 	a := Args{
-		shortFlags: make(map[string]*Flag),
-		longFlags:  make(map[string]*Flag),
+		short:      make(map[string]*Flag),
+		long:       make(map[string]*Flag),
 		commands:   make(map[string]*Flag),
 		groups:     make(map[string][]*Flag),
 		groupOrder: []string{noGroup},
@@ -164,10 +177,10 @@ func (a *Args) parseField(sf reflect.StructField) {
 		}
 
 		if f.Short != "" {
-			a.shortFlags[f.Short] = f
+			a.short[f.Short] = f
 		}
 		if f.Long != "" {
-			a.longFlags[f.Long] = f
+			a.long[f.Long] = f
 		}
 	}
 
@@ -203,7 +216,7 @@ func (a *Args) parseArgs(args []string) {
 
 func (a *Args) parseLong(args []string) {
 	n := args[0][2:]
-	f, ok := a.longFlags[n]
+	f, ok := a.long[n]
 	if !ok {
 		return
 	}
@@ -214,7 +227,7 @@ func (a *Args) parseLong(args []string) {
 func (a *Args) parseShort(args []string) []string {
 	flags := args[0][1:]
 	for _, c := range flags {
-		f := a.shortFlags[string(c)]
+		f := a.short[string(c)]
 		if f != nil {
 			if f.field.Kind() == reflect.Bool {
 				f.setBool(true)
