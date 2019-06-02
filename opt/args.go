@@ -134,8 +134,9 @@ func (a *Args) parseOpts(data interface{}) {
 		f := t.Field(i).Type
 		if t.Field(i).Anonymous && f.Kind() == reflect.Struct {
 			a.parseField(f.Field(0))
+		} else {
+			a.parseField(t.Field(i))
 		}
-		a.parseField(t.Field(i))
 	}
 }
 
