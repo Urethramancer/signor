@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 	"unicode"
+
+	"github.com/Urethramancer/signor/stringer"
 )
 
 // Field holds a structure's field,
@@ -84,15 +86,14 @@ func (f *Field) MakeTags(json, omitempty bool) {
 
 // String representation of the field (compact; one tab as separator).
 func (f *Field) String() string {
-	var b strings.Builder
+	var b stringer.Stringer
 
 	if f.Name == "" {
 		b.WriteString(f.Value)
 		return b.String()
 	}
 
-	b.WriteString(f.Name)
-	b.WriteString("\t")
+	b.WriteStrings(f.Name, "\t")
 
 	if f.IsPointer {
 		b.WriteString("*")
@@ -105,9 +106,7 @@ func (f *Field) String() string {
 		}
 		b.WriteString(f.Value)
 	} else if f.IsMap {
-		b.WriteString("map[")
-		b.WriteString(f.Key)
-		b.WriteString("]")
+		b.WriteStrings("map[", f.Key, "]")
 		if f.IsPointerValue {
 			b.WriteString("*")
 		}
@@ -117,15 +116,12 @@ func (f *Field) String() string {
 	}
 
 	if f.Tags.JSON.Name != "" {
-		b.WriteString("\t")
-		b.WriteString("`json:")
-		b.WriteRune('"')
+		b.WriteI("\t", "`json:", '"')
 		b.WriteString(f.Tags.JSON.Name)
 		if f.Tags.JSON.Omitempty {
 			b.WriteString(",omitempty")
 		}
-		b.WriteRune('"')
-		b.WriteString("`")
+		b.WriteI('"', "`")
 	}
 	return b.String()
 }
