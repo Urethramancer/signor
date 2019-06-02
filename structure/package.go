@@ -1,7 +1,6 @@
 package structure
 
 import (
-	"fmt"
 	"go/ast"
 	"go/token"
 	"io/ioutil"
@@ -81,7 +80,6 @@ func (pkg *Package) parse() {
 		case "\n":
 
 		default:
-			fmt.Printf("%s: %s\n", pkg.Position, pkg.TokenText())
 		}
 	}
 	pkg.sortImports()
