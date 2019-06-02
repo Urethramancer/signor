@@ -7,7 +7,6 @@ import (
 
 	"github.com/Urethramancer/signor/log"
 	"github.com/Urethramancer/signor/opt"
-	"github.com/Urethramancer/signor/server"
 )
 
 // Options for the app.
@@ -16,8 +15,9 @@ var Options struct {
 	Version bool `opt:"" short:"V" long:"version" help:"Display the version string and exit."`
 	Help    bool `short:"h" long:"help" help:"Show usage."`
 	// Config defaults to "config.json" in the same directory.
-	Config string   `opt:"required" short:"c" help:"The configuration file." default:"config.json" group:"Basics" placeholder:"FILE"`
-	Start  StartCmd `command:"start" help:"Start server."`
+	Config   string      `opt:"required" short:"c" help:"The configuration file." default:"config.json" group:"Basics" placeholder:"FILE"`
+	Start    StartCmd    `command:"start" help:"Start server."`
+	Generate GenerateCmd `command:"generate" help:"Scaffolding, structure and utility function generation." aliases:"gen"`
 }
 
 // StartCmd options.
@@ -50,10 +50,10 @@ func main() {
 		os.Exit(2)
 	}
 
-	srv := server.New("Test")
-	srv.Start()
+	// srv := server.New("Test")
+	// srv.Start()
 	// <-daemon.BreakChannel()
-	srv.Stop()
+	// srv.Stop()
 
 	// var err error
 	// var pkg structure.Package
