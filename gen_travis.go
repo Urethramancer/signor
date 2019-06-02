@@ -53,7 +53,8 @@ func (tr *TravisCmd) Run(in []string) error {
 	if tr.Name == "" {
 		log.Default.Msg(yml.String())
 	} else {
-		files.WriteFile(tr.Name, []byte(yml.String()))
+
+		return files.WriteFile(tr.Name, []byte(yml.String()))
 	}
 	return nil
 }
