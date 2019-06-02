@@ -4,6 +4,8 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/Urethramancer/signor/stringer"
 )
 
 // Flag or command option.
@@ -27,19 +29,21 @@ type Flag struct {
 }
 
 func (f *Flag) UsageString() (string, string) {
-	var vars, help strings.Builder
+	var vars, help stringer.Stringer
 	vars.WriteString("  ")
 	if f.Short != "" {
-		vars.WriteString("-")
-		vars.WriteString(f.Short)
+		vars.WriteStrings("-", f.Short)
 	}
 
 	if f.Long != "" {
 		if f.Short != "" {
 			vars.WriteString(", ")
 		}
-		vars.WriteString("--")
-		vars.WriteString(f.Long)
+		vars.WriteStrings("--", f.Long)
+	}
+
+	if f.Placeholder != "" {
+		vars.WriteStrings(" ", f.Placeholder)
 	}
 
 	help.WriteString(f.Help)
@@ -47,24 +51,24 @@ func (f *Flag) UsageString() (string, string) {
 	if f.CommandName != "" {
 		vars.WriteString(f.CommandName)
 		if len(f.Aliases) > 0 {
-			help.WriteString(" (Aliases: ")
-			list := strings.Join(f.Aliases, ", ")
-			help.WriteString(list)
-			help.WriteString(")")
+			help.WriteStrings(
+				" (Aliases: ",
+				strings.Join(f.Aliases, ", "),
+				")",
+			)
 		}
 	}
 
 	if len(f.Choices) > 0 {
-		help.WriteString(" (Restricted to: ")
-		c := strings.Join(f.Choices, ", ")
-		help.WriteString(c)
-		help.WriteString(")")
+		help.WriteStrings(
+			" (Restricted to: ",
+			strings.Join(f.Choices, ", "),
+			")",
+		)
 	}
 
 	if f.Default != "" {
-		help.WriteString(" (Default: ")
-		help.WriteString(f.Default)
-		help.WriteString(")")
+		help.WriteStrings(" (Default: ", f.Default, ")")
 	}
 	return vars.String(), help.String()
 }
