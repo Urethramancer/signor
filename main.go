@@ -2,53 +2,38 @@
 package main
 
 import (
+	"errors"
 	"os"
 
+	"github.com/Urethramancer/signor/log"
 	"github.com/Urethramancer/signor/opt"
 	"github.com/Urethramancer/signor/server"
-	"github.com/Urethramancer/slog"
 )
 
 // Options for the app.
 var Options struct {
-	//Version string is returned..
-	Version bool `opt:"" short:"V" long:"version" help:"Display the version string and exit." group:"Basics"`
+	//Version string is returned.
+	Version bool `opt:"" short:"V" long:"version" help:"Display the version string and exit."`
 	Help    bool `short:"h" long:"help" help:"Show usage."`
 	// Config defaults to "config.json" in the same directory.
-	Config string `opt:"required" short:"c" help:"The configuration file." default:"config.json" group:"Basics" placeholder:"FILE"`
-	Name   string `opt:"required" long:"name"`
-	// Number is an integer.
-	Number      int            `short:"n" group:"Maths" help:"An integer."`
-	OneTwoThree int            `short:"o" help:"One, two or three." choices:"1,2,3" default:"1"`
-	Colour      string         `short:"C" long:"colour" help:"A colour." choices:"red,green,blue" default:"green"`
-	List        List           `command:"list" group:"Commands" help:"List stuff." aliases:"ls,l"`
-	X           []string       `short:"X"`
-	Y           []int          `short:"Y"`
-	Z           map[string]int `short:"Z"`
-	A           bool           `short:"a"`
-	B           bool           `short:"b"`
+	Config string   `opt:"required" short:"c" help:"The configuration file." default:"config.json" group:"Basics" placeholder:"FILE"`
+	Start  StartCmd `command:"start" help:"Start server."`
 }
 
-// List options and sub-commands.
-type List struct {
-	All     All  `command:"all" group:"Commands"`
-	Verbose bool `short:"v" help:"List more details."`
+// StartCmd options.
+type StartCmd struct {
+	Help   bool   `short:"h" long:"help" help:"Show usage."`
+	Domain string `help:"The domain to accept connections on." placeholder:"DOMAIN"`
 }
 
-// Run List.
-func (l *List) Run(in []string) error {
-	slog.Msg("Running list")
-	slog.Msg("Remaining args: %+v", in)
-	return nil
-}
+// Run Info.
+func (start *StartCmd) Run(in []string) error {
+	if start.Help {
+		return errors.New(opt.ErrorUsage)
+	}
 
-// All has no options.
-type All struct{}
-
-// Run List All.
-func (a *All) Run(in []string) error {
-	slog.Msg("That's all, folks.")
-	slog.Msg("Remaining args: %+v", in)
+	log.Default.Msg("Domain: '%s'", start.Domain)
+	log.Default.Msg("Remaining: %v", in)
 	return nil
 }
 
@@ -57,6 +42,12 @@ func main() {
 	if Options.Help || len(os.Args) < 2 {
 		a.Usage()
 		return
+	}
+
+	err := a.RunCommand()
+	if err != nil {
+		log.Default.Msg("Error running: %s", err.Error())
+		os.Exit(2)
 	}
 
 	srv := server.New("Test")
