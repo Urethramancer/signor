@@ -25,6 +25,8 @@ type Flag struct {
 	command     reflect.Value
 	err         error
 	IsCommand   bool
+	IsSlice     bool
+	IsMap       bool
 	Required    bool
 }
 
