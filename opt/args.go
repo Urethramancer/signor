@@ -42,6 +42,10 @@ func (a *Args) Usage() {
 			b.WriteString(" [OPTION]")
 		}
 	}
+
+	if a.execute != nil {
+		b.WriteStrings(" ", a.execute.Name)
+	}
 	if len(a.commandlist) > 0 {
 		b.WriteString(" [COMMAND]")
 	}
