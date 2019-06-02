@@ -33,6 +33,7 @@ const (
 func (a *Args) Usage() {
 	var b stringer.Stringer
 	b.WriteStrings("Usage:\n  ", os.Args[0])
+	// Invocation
 	c := len(a.short) + len(a.long)
 	if c > 0 {
 		if c > 1 {
@@ -44,8 +45,14 @@ func (a *Args) Usage() {
 	if len(a.commandlist) > 0 {
 		b.WriteString(" [COMMAND]")
 	}
+
+	for _, p := range a.positionalList {
+		b.WriteStrings(" [", p.Placeholder, "]")
+	}
+
 	b.WriteString("\n\n")
 
+	// Groups
 	for _, gn := range a.groupOrder {
 		flags := a.groups[gn]
 		if gn == noGroup {
@@ -56,27 +63,35 @@ func (a *Args) Usage() {
 			b.WriteStrings("\n", gn, ":\n")
 		}
 		for _, f := range flags {
-			vars, help := f.UsageString()
-			b.WriteStrings(vars, "\t\t")
-			if len(vars) < 8 {
-				b.WriteString("\t")
-			}
-			b.WriteStrings(help, "\n")
+			fullFieldUsage(&b, f)
 		}
 	}
 
-	if len(a.commandlist) > 0 {
-		b.WriteString("\nCommands:\n")
-	}
-	for _, f := range a.commandlist {
-		vars, help := f.UsageString()
-		b.WriteStrings(vars, "\t\t")
-		if len(vars) < 8 {
-			b.WriteString("\t")
+	// Positional arguments
+	if len(a.positionalList) > 0 {
+		b.WriteString("\nPositional arguments:\n")
+		for _, f := range a.positionalList {
+			fullFieldUsage(&b, f)
 		}
-		b.WriteStrings(help, "\n")
 	}
 	log.Default.Msg(b.String())
+
+	// Commands
+	if len(a.commandlist) > 0 {
+		b.WriteString("\nCommands:\n")
+		for _, f := range a.commandlist {
+			fullFieldUsage(&b, f)
+		}
+	}
+}
+
+func fullFieldUsage(b *stringer.Stringer, f *Flag) {
+	vars, help := f.UsageString()
+	b.WriteStrings(vars, "\t\t")
+	if len(vars) < 8 {
+		b.WriteString("\t")
+	}
+	b.WriteStrings(help, "\n")
 }
 
 // Parse the command line for arguments and tool commands.
@@ -162,25 +177,29 @@ func (a *Args) parseField(sf reflect.StructField) {
 	} else {
 		var g []*Flag
 		var ok bool
-		if f.Group == "" {
-			g = a.groups[noGroup]
-			g = append(g, f)
-			a.groups[noGroup] = g
+		if f.Long == "" && f.Short == "" && f.Placeholder != "" {
+			a.positionalList = append(a.positionalList, f)
 		} else {
-			g, ok = a.groups[f.Group]
-			if !ok {
-				g = make([]*Flag, 0)
-				a.groupOrder = append(a.groupOrder, f.Group)
+			if f.Group == "" {
+				g = a.groups[noGroup]
+				g = append(g, f)
+				a.groups[noGroup] = g
+			} else {
+				g, ok = a.groups[f.Group]
+				if !ok {
+					g = make([]*Flag, 0)
+					a.groupOrder = append(a.groupOrder, f.Group)
+				}
+				g = append(g, f)
+				a.groups[f.Group] = g
 			}
-			g = append(g, f)
-			a.groups[f.Group] = g
-		}
 
-		if f.Short != "" {
-			a.short[f.Short] = f
-		}
-		if f.Long != "" {
-			a.long[f.Long] = f
+			if f.Short != "" {
+				a.short[f.Short] = f
+			}
+			if f.Long != "" {
+				a.long[f.Long] = f
+			}
 		}
 	}
 
@@ -189,6 +208,7 @@ func (a *Args) parseField(sf reflect.StructField) {
 
 // parseArgs from CLI.
 func (a *Args) parseArgs(args []string) {
+	posDone := a.positionalList
 	for i := 0; i < len(args); i++ {
 		x := args[i]
 		// We're done here - the "--" argument means to stop parsing
@@ -203,13 +223,19 @@ func (a *Args) parseArgs(args []string) {
 				args = a.parseShort(args[i:])
 			}
 		} else {
-			f := a.commands[args[i]]
-			if f != nil {
-				f.parseCommand(args[i+1:])
-				a.execute = f
-				return
+			if len(posDone) > 0 {
+				p := posDone[0]
+				posDone = posDone[1:]
+				p.setValue(args[i])
+			} else {
+				f := a.commands[args[i]]
+				if f != nil {
+					f.parseCommand(args[i+1:])
+					a.execute = f
+					return
+				}
+				a.Remaining = append(a.Remaining, args[i])
 			}
-			a.Remaining = append(a.Remaining, args[i])
 		}
 	}
 }
