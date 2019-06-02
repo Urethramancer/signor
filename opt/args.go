@@ -10,12 +10,13 @@ import (
 
 // Args gets options and commands parsed into it.
 type Args struct {
-	st         reflect.Value
-	Program    string
-	shortFlags map[string]*Flag
-	longFlags  map[string]*Flag
-	commands   map[string]*Flag
-	groups     map[string][]*Flag
+	st          reflect.Value
+	Program     string
+	shortFlags  map[string]*Flag
+	longFlags   map[string]*Flag
+	commands    map[string]*Flag
+	commandlist []*Flag
+	groups      map[string][]*Flag
 	// groupOrder is in the order of group tags encountered.
 	groupOrder []string
 	Remaining  []string
@@ -31,6 +32,13 @@ func (a *Args) Usage() {
 	var b strings.Builder
 	b.WriteString("Usage:\n  ")
 	b.WriteString(os.Args[0])
+	c := len(a.shortFlags) + len(a.longFlags)
+	if c > 0 {
+		b.WriteString(" [OPTION]...")
+	}
+	if len(a.commandlist) > 0 {
+		b.WriteString(" [COMMAND]")
+	}
 	b.WriteString("\n\n")
 
 	for _, gn := range a.groupOrder {
@@ -126,6 +134,7 @@ func (a *Args) parseField(sf reflect.StructField) {
 	f.parseOpts(sf.Tag.Get("opt"))
 
 	if f.IsCommand {
+		a.commandlist = append(a.commandlist, f)
 		c = sf.Tag.Get("aliases")
 		if c != "" {
 			f.Aliases = strings.Split(c, ",")
@@ -138,6 +147,22 @@ func (a *Args) parseField(sf reflect.StructField) {
 			a.commands[x] = f
 		}
 	} else {
+		var g []*Flag
+		var ok bool
+		if f.Group == "" {
+			g = a.groups[noGroup]
+			g = append(g, f)
+			a.groups[noGroup] = g
+		} else {
+			g, ok = a.groups[f.Group]
+			if !ok {
+				g = make([]*Flag, 0)
+				a.groupOrder = append(a.groupOrder, f.Group)
+			}
+			g = append(g, f)
+			a.groups[f.Group] = g
+		}
+
 		if f.Short != "" {
 			a.shortFlags[f.Short] = f
 		}
@@ -146,21 +171,6 @@ func (a *Args) parseField(sf reflect.StructField) {
 		}
 	}
 
-	var g []*Flag
-	var ok bool
-	if f.Group == "" {
-		g = a.groups[noGroup]
-		g = append(g, f)
-		a.groups[noGroup] = g
-	} else {
-		g, ok = a.groups[f.Group]
-		if !ok {
-			g = make([]*Flag, 0)
-			a.groupOrder = append(a.groupOrder, f.Group)
-		}
-		g = append(g, f)
-		a.groups[f.Group] = g
-	}
 	return
 }
 
