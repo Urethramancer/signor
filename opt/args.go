@@ -77,7 +77,6 @@ func (a *Args) Usage() {
 			fullFieldUsage(&b, f)
 		}
 	}
-	log.Default.Msg(b.String())
 
 	// Commands
 	if len(a.commandlist) > 0 {
@@ -86,6 +85,8 @@ func (a *Args) Usage() {
 			fullFieldUsage(&b, f)
 		}
 	}
+
+	log.Default.Msg(b.String())
 }
 
 func fullFieldUsage(b *stringer.Stringer, f *Flag) {
@@ -132,7 +133,7 @@ func (a *Args) parseOpts(data interface{}) {
 	t := a.st.Type()
 	for i := 0; i < a.st.NumField(); i++ {
 		f := t.Field(i).Type
-		if t.Field(i).Anonymous && f.Kind() == reflect.Struct {
+		if t.Field(i).Anonymous && f.Kind() == reflect.Struct && f.Field(0).Tag.Get("command") == "" {
 			a.parseField(f.Field(0))
 		} else {
 			a.parseField(t.Field(i))
@@ -165,8 +166,9 @@ func (a *Args) parseField(sf reflect.StructField) {
 	case reflect.Map:
 		f.IsMap = true
 	default:
-		f.IsCommand = f.CommandName != ""
 	}
+
+	f.IsCommand = f.CommandName != ""
 
 	c := sf.Tag.Get("choices")
 	if c != "" {
