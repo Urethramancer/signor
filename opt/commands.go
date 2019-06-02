@@ -1,5 +1,7 @@
 package opt
 
+import "errors"
+
 // Runner is the interface for tool commands to conform to.
 type Runner interface {
 	Run(args []string) error
@@ -7,12 +9,16 @@ type Runner interface {
 
 // RunCommand and recurse.
 func (a *Args) RunCommand() error {
-	if a.execute != nil {
-		err := a.execute.executeCommand()
-		if err != nil {
-			return err
-		}
+	if a.execute == nil {
+		return errors.New(ErrorNoCommand)
 	}
 
-	return nil
+	err := a.execute.executeCommand()
+	if err != nil && err.Error() == ErrorUsage {
+		a.execute.Args.Usage()
+		// Swallow this error message
+		return nil
+	}
+
+	return err
 }
