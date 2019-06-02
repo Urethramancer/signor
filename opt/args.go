@@ -48,6 +48,9 @@ func (a *Args) Usage() {
 
 	for _, p := range a.positionalList {
 		b.WriteStrings(" [", p.Placeholder, "]")
+		if p.IsSlice {
+			b.WriteString("...")
+		}
 	}
 
 	b.WriteString("\n\n")
@@ -88,6 +91,9 @@ func (a *Args) Usage() {
 func fullFieldUsage(b *stringer.Stringer, f *Flag) {
 	vars, help := f.UsageString()
 	b.WriteStrings(vars, "\t\t")
+	if len(vars) < 16 {
+		b.WriteString("\t")
+	}
 	if len(vars) < 8 {
 		b.WriteString("\t")
 	}
@@ -148,7 +154,14 @@ func (a *Args) parseField(sf reflect.StructField) {
 		Default:     sf.Tag.Get("default"),
 	}
 
-	f.IsCommand = f.CommandName != ""
+	switch f.field.Kind() {
+	case reflect.Slice:
+		f.IsSlice = true
+	case reflect.Map:
+		f.IsMap = true
+	default:
+		f.IsCommand = f.CommandName != ""
+	}
 
 	c := sf.Tag.Get("choices")
 	if c != "" {
@@ -226,6 +239,10 @@ func (a *Args) parseArgs(args []string) {
 			if len(posDone) > 0 {
 				p := posDone[0]
 				posDone = posDone[1:]
+				if p.IsSlice {
+					p.field.Set(reflect.ValueOf(args[i:]))
+					return
+				}
 				p.setValue(args[i])
 			} else {
 				f := a.commands[args[i]]
