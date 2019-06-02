@@ -131,6 +131,10 @@ func (a *Args) parseOpts(data interface{}) {
 	a.st = reflect.ValueOf(data).Elem()
 	t := a.st.Type()
 	for i := 0; i < a.st.NumField(); i++ {
+		f := t.Field(i).Type
+		if t.Field(i).Anonymous && f.Kind() == reflect.Struct {
+			a.parseField(f.Field(0))
+		}
 		a.parseField(t.Field(i))
 	}
 }

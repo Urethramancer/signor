@@ -13,7 +13,7 @@ import (
 var Options struct {
 	//Version string is returned.
 	Version bool `opt:"" short:"V" long:"version" help:"Display the version string and exit."`
-	Help    bool `short:"h" long:"help" help:"Show usage."`
+	opt.DefaultHelp
 	// Config defaults to "config.json" in the same directory.
 	Config   string      `opt:"required" short:"c" help:"The configuration file." default:"config.json" group:"Basics" placeholder:"FILE"`
 	Start    StartCmd    `command:"start" help:"Start server."`
