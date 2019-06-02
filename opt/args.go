@@ -53,14 +53,14 @@ func (a *Args) Usage() {
 		}
 	}
 
-	b.WriteString("\n\n")
+	b.WriteString("\n")
 
 	// Groups
 	for _, gn := range a.groupOrder {
 		flags := a.groups[gn]
 		if gn == noGroup {
 			if len(flags) > 0 {
-				b.WriteString("Application options:\n")
+				b.WriteString("\nApplication options:\n")
 			}
 		} else {
 			b.WriteStrings("\n", gn, ":\n")
