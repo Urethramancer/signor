@@ -33,8 +33,12 @@ func (f *Flag) UsageString() (string, string) {
 		vars.WriteString("-")
 		vars.WriteString(f.Short)
 	}
+
 	if f.Long != "" {
-		vars.WriteString(", --")
+		if f.Short != "" {
+			vars.WriteString(", ")
+		}
+		vars.WriteString("--")
 		vars.WriteString(f.Long)
 	}
 
