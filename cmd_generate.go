@@ -7,9 +7,14 @@ import (
 )
 
 type GenerateCmd struct {
+	opt.DefaultHelp
 	Travis TravisCmd `command:"travis" help:"Generate .travis.yml files for GitHub projects."`
 }
 
 func (g *GenerateCmd) Run(in []string) error {
-	return errors.New(opt.ErrorUsage)
+	if g.Help {
+		return errors.New(opt.ErrorUsage)
+	}
+
+	return nil
 }

@@ -32,7 +32,7 @@ const (
 // Usage printout.
 func (a *Args) Usage() {
 	var b stringer.Stringer
-	b.WriteStrings("Usage:\n  ", os.Args[0])
+	b.WriteStrings("Usage:\n  ", a.Program)
 	// Invocation
 	c := len(a.short) + len(a.long)
 	if c > 0 {
@@ -108,8 +108,7 @@ func fullFieldUsage(b *stringer.Stringer, f *Flag) {
 // Parse the command line for arguments and tool commands.
 func Parse(data interface{}) *Args {
 	args := newArgs(os.Args)
-	args.Parse(data, os.Args[1:])
-	args.Program = os.Args[0]
+	args.Parse(data, os.Args[1:], os.Args[0])
 	return args
 }
 
@@ -126,7 +125,8 @@ func newArgs(in []string) *Args {
 }
 
 // Parse an option structure and slice of arguments.
-func (a *Args) Parse(data interface{}, in []string) {
+func (a *Args) Parse(data interface{}, in []string, parent string) {
+	a.Program = parent
 	a.parseOpts(data)
 	a.parseArgs(in)
 }
@@ -258,7 +258,7 @@ func (a *Args) parseArgs(args []string) {
 			} else {
 				f := a.commands[args[i]]
 				if f != nil {
-					f.parseCommand(args[i+1:])
+					f.parseCommand(args[i+1:], a.Program)
 					a.execute = f
 					return
 				}

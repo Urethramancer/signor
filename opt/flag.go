@@ -176,10 +176,12 @@ func val(s string, kind reflect.Kind) reflect.Value {
 }
 
 // parseCommand with the remaining args.
-func (f *Flag) parseCommand(args []string) {
+func (f *Flag) parseCommand(args []string, parent string) {
 	f.Args = newArgs(args)
 	iface := f.field.Addr()
-	f.Args.Parse(iface.Interface(), args)
+	p := stringer.New()
+	p.WriteStrings(parent, " ", f.CommandName)
+	f.Args.Parse(iface.Interface(), args, p.String())
 	f.command = iface.MethodByName("Run")
 }
 

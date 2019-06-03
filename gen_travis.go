@@ -33,10 +33,15 @@ func (tr *TravisCmd) Run(in []string) error {
 	yml := stringer.New()
 	yml.WriteStrings("language: go\n\ngo:\n  - ", ver, "\n")
 
+	if tr.Input == nil || len(tr.Input) < 0 {
+		return errors.New("not enough arguments")
+	}
+
 	pkg, err := structure.NewPackage(tr.Input...)
 	if err != nil {
 		return err
 	}
+
 	yml.WriteStrings("\ninstall:\n")
 	for _, imp := range pkg.ExternalImports {
 		imp = strings.ReplaceAll(imp, "\"", "")
@@ -50,10 +55,10 @@ func (tr *TravisCmd) Run(in []string) error {
 		"        - $HOME/.cache/go-build\n",
 		"        - $HOME/gopath/pkg/mod\n",
 	)
+
 	if tr.Name == "" {
 		log.Default.Msg(yml.String())
 	} else {
-
 		return files.WriteFile(tr.Name, []byte(yml.String()))
 	}
 	return nil
