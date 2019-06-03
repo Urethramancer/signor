@@ -43,7 +43,7 @@ func (tr *TravisCmd) Run(in []string) error {
 	}
 
 	yml.WriteStrings("\ninstall:\n")
-	for _, imp := range pkg.ExternalImports {
+	for _, imp := range pkg.MergeExternalImports() {
 		imp = strings.ReplaceAll(imp, "\"", "")
 		yml.WriteStrings("    - go get ", imp, "\n")
 	}

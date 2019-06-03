@@ -346,3 +346,19 @@ func (pkg *Package) ProtoString() string {
 	}
 	return b.String()
 }
+
+func (pkg *Package) MergeExternalImports() []string {
+	list := []string{}
+
+	m := make(map[string]bool)
+	for _, i := range pkg.ExternalImports {
+		a := strings.Split(i, "/")
+		i = strings.Join(a[:3], "/")
+		m[i] = true
+	}
+	for k, _ := range m {
+		list = append(list, k)
+	}
+	sort.Strings(list)
+	return list
+}
