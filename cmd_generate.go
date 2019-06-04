@@ -12,9 +12,5 @@ type GenerateCmd struct {
 }
 
 func (g *GenerateCmd) Run(in []string) error {
-	if g.Help {
-		return errors.New(opt.ErrorUsage)
-	}
-
-	return nil
+	return errors.New(opt.ErrorUsage)
 }
