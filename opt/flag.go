@@ -186,8 +186,12 @@ func (f *Flag) parseCommand(args []string, parent string) {
 }
 
 // executeCommand specified on command line. Returns the next command, if any, or an error.
-func (f *Flag) executeCommand() error {
+func (f *Flag) executeCommand(all bool) error {
 	f.err = nil
+	if !all && f.Args != nil && f.Args.execute != nil {
+		return f.Args.RunCommand(all)
+	}
+
 	if f.command.Kind() == reflect.Func {
 		ret := f.command.Call([]reflect.Value{reflect.ValueOf(f.Args.Remaining)})
 		err := ret[0].Interface()
@@ -198,7 +202,7 @@ func (f *Flag) executeCommand() error {
 	}
 
 	if f.Args != nil && f.Args.execute != nil {
-		f.Args.RunCommand()
+		return f.Args.RunCommand(all)
 	}
 
 	return nil

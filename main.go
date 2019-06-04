@@ -44,7 +44,7 @@ func main() {
 		return
 	}
 
-	err := a.RunCommand()
+	err := a.RunCommand(false)
 	if err != nil {
 		log.Default.Msg("Error running: %s", err.Error())
 		os.Exit(2)

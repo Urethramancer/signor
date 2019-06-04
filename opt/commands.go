@@ -10,12 +10,12 @@ type Runner interface {
 }
 
 // RunCommand and recurse.
-func (a *Args) RunCommand() error {
+func (a *Args) RunCommand(all bool) error {
 	if a.execute == nil {
 		return errors.New(ErrorNoCommand)
 	}
 
-	err := a.execute.executeCommand()
+	err := a.execute.executeCommand(all)
 	if err != nil && err.Error() == ErrorUsage {
 		a.execute.Args.Usage()
 		// Swallow this error message
