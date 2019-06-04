@@ -20,12 +20,7 @@ type Site struct {
 	Key string `json:"key,omitempty"`
 
 	// Internal data for the instance.
-	url    string
-	router *mux.Router
-	X      []int32
-	Y      map[int]string
-	Z      []byte
-	Moo    map[int]*string
+	url string
 }
 
 func (site *Site) favicon(w http.ResponseWriter, r *http.Request) error {
