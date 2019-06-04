@@ -97,46 +97,55 @@ func (s *INISection) parse(r *bufio.Reader) {
 		}
 		a[0] = strings.TrimSpace(a[0])
 		a[1] = strings.TrimSpace(a[1])
-		// TODO: Figure out kind and parse as that.
+		switch a[1] {
+		case "yes", "true", "no", "false":
+			s.AddBool(a[0], boolValue(a[1]))
+			return
+		}
+
+		// TODO: Figure out ints and floats.
 		s.AddString(a[0], a[1])
 	}
 }
 
+// boolValue from common strings.
+func boolValue(s string) bool {
+	switch s {
+	case "yes", "true":
+		return true
+	}
+
+	return false
+}
+
+// AddBool adds a new bool field to the section.
 func (s *INISection) AddBool(key string, value bool) {
-	f := INIField{
-		Value: fmt.Sprintf("%t", value),
-		Type:  INIBool,
-		boolV: value,
-	}
+	f := INIField{}
+	f.SetBool(key, value)
 	s.Fields[key] = &f
 	s.Order = append(s.Order, key)
 }
 
+// AddBool adds a new int field to the section.
 func (s *INISection) AddInt(key string, value int) {
-	f := INIField{
-		Value: fmt.Sprintf("%d", value),
-		Type:  INIInt,
-		intV:  value,
-	}
+	f := INIField{}
+	f.SetInt(key, value)
 	s.Fields[key] = &f
 	s.Order = append(s.Order, key)
 }
 
+// AddBool adds a new float64 field to the section.
 func (s *INISection) AddFloat(key string, value float64) {
-	f := INIField{
-		Value:  fmt.Sprintf("%f", value),
-		Type:   INIFloat,
-		floatV: value,
-	}
+	f := INIField{}
+	f.SetFloat(key, value)
 	s.Fields[key] = &f
 	s.Order = append(s.Order, key)
 }
 
+// AddBool adds a new string field to the section.
 func (s *INISection) AddString(key string, value string) {
-	f := INIField{
-		Value: value,
-		Type:  INIString,
-	}
+	f := INIField{}
+	f.SetString(key, value)
 	s.Fields[key] = &f
 	s.Order = append(s.Order, key)
 }
@@ -155,6 +164,8 @@ func (f *INIField) GetBool(key string) bool {
 // SetBool sets the field as a bool.
 func (f *INIField) SetBool(key string, value bool) {
 	f.boolV = value
+	f.Type = INIBool
+	f.Value = fmt.Sprintf("%t", value)
 }
 
 // GetInt returns the field as an int.
@@ -165,6 +176,8 @@ func (f *INIField) GetInt(key string) int {
 // SetInt sets the field as an int.
 func (f *INIField) SetInt(key string, value int) {
 	f.intV = value
+	f.Type = INIInt
+	f.Value = fmt.Sprintf("%d", value)
 }
 
 // GetFloat returns the field as a float64.
@@ -175,4 +188,12 @@ func (f *INIField) GetFloat(key string) float64 {
 // SetFloat sets the field as a float64.
 func (f *INIField) SetFloat(key string, value float64) {
 	f.floatV = value
+	f.Type = INIFloat
+	f.Value = fmt.Sprintf("%f", value)
+}
+
+// SetString sets the field as a string.
+func (f *INIField) SetString(key, value string) {
+	f.Value = value
+	f.Type = INIString
 }
