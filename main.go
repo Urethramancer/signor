@@ -1,4 +1,3 @@
-//go:generate echo Generating stuff.
 package main
 
 import (
