@@ -4,8 +4,10 @@ import (
 	"errors"
 	"os"
 
+	"github.com/Urethramancer/signor/files"
 	"github.com/Urethramancer/signor/log"
 	"github.com/Urethramancer/signor/opt"
+	"github.com/Urethramancer/slog"
 )
 
 // Options for the app.
@@ -43,7 +45,17 @@ func main() {
 		return
 	}
 
-	err := a.RunCommand(false)
+	var err error
+
+	ini, err := files.LoadINI("test.ini")
+	if err != nil {
+		slog.Msg("Error: %s", err.Error())
+	}
+	for _, x := range ini.Order {
+		slog.Msg("[%s]: %d", x, len(ini.Sections[x].Order))
+	}
+
+	err = a.RunCommand(false)
 	if err != nil {
 		log.Default.Msg("Error running: %s", err.Error())
 		os.Exit(2)
