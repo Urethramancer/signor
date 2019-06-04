@@ -92,7 +92,7 @@ func (f *Flag) parseOpts(opt string) {
 func (f *Flag) setValue(s string) {
 	switch f.field.Kind() {
 	case reflect.String:
-		f.field.SetString(s)
+		f.setString(s)
 	case reflect.Int:
 		f.setInt(s)
 	case reflect.Float32:

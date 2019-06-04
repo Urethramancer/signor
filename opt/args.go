@@ -7,6 +7,7 @@ import (
 
 	"github.com/Urethramancer/signor/log"
 	"github.com/Urethramancer/signor/stringer"
+	"github.com/Urethramancer/slog"
 )
 
 // Args gets options and commands parsed into it.
@@ -242,7 +243,7 @@ func (a *Args) parseArgs(args []string) {
 		}
 		if strings.HasPrefix(x, "--") || strings.HasPrefix(x, "-") {
 			if strings.HasPrefix(x, "--") {
-				a.parseLong(args[i:])
+				args = a.parseLong(args[i:])
 			} else {
 				args = a.parseShort(args[i:])
 			}
@@ -268,14 +269,19 @@ func (a *Args) parseArgs(args []string) {
 	}
 }
 
-func (a *Args) parseLong(args []string) {
+func (a *Args) parseLong(args []string) []string {
 	n := args[0][2:]
+	if strings.Contains(n, "=") {
+		sl := strings.Split(n, "=")
+		n = sl[0]
+		newargs := []string{sl[1]}
+		args = append(newargs, args[1:]...)
+	}
 	f, ok := a.long[n]
 	if !ok {
-		return
+		return args[1:]
 	}
-
-	a.parseArg(args, f)
+	return a.parseArg(args, f)
 }
 
 func (a *Args) parseShort(args []string) []string {
@@ -331,6 +337,7 @@ func (a *Args) parseArg(args []string, f *Flag) []string {
 	if len(args) < 2 {
 		return args
 	}
+	slog.Msg("Setting %s and returning %v (%d)", args[1], args, len(args))
 
 	f.setValue(args[1])
 	return args[2:]
