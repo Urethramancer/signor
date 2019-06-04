@@ -7,7 +7,6 @@ import (
 
 	"github.com/Urethramancer/signor/log"
 	"github.com/Urethramancer/signor/stringer"
-	"github.com/Urethramancer/slog"
 )
 
 // Args gets options and commands parsed into it.
@@ -234,36 +233,39 @@ func (a *Args) parseField(sf reflect.StructField) {
 // parseArgs from CLI.
 func (a *Args) parseArgs(args []string) {
 	posDone := a.positionalList
-	for i := 0; i < len(args); i++ {
-		x := args[i]
+	for len(args) > 0 {
+		x := args[0]
 		// We're done here - the "--" argument means to stop parsing
 		if x == "--" {
-			a.Remaining = args[i+1:]
+			a.Remaining = args[1:]
 			return
 		}
 		if strings.HasPrefix(x, "--") || strings.HasPrefix(x, "-") {
 			if strings.HasPrefix(x, "--") {
-				args = a.parseLong(args[i:])
+				args = a.parseLong(args)
 			} else {
-				args = a.parseShort(args[i:])
+				args = a.parseShort(args)
 			}
 		} else {
 			if len(posDone) > 0 {
 				p := posDone[0]
 				posDone = posDone[1:]
 				if p.IsSlice {
-					p.field.Set(reflect.ValueOf(args[i:]))
+					p.field.Set(reflect.ValueOf(args))
 					return
 				}
-				p.setValue(args[i])
+				p.setValue(args[0])
 			} else {
-				f := a.commands[args[i]]
+				f := a.commands[args[0]]
 				if f != nil {
-					f.parseCommand(args[i+1:], a.Program)
+					f.parseCommand(args[1:], a.Program)
 					a.execute = f
 					return
 				}
-				a.Remaining = append(a.Remaining, args[i])
+				a.Remaining = append(a.Remaining, args[0])
+			}
+			if len(args) > 0 {
+				args = args[1:]
 			}
 		}
 	}
@@ -276,14 +278,18 @@ func (a *Args) parseLong(args []string) []string {
 		n = sl[0]
 		newargs := []string{sl[1]}
 		args = append(newargs, args[1:]...)
+	} else {
+		args = args[1:]
 	}
 	f, ok := a.long[n]
 	if !ok {
-		return args[1:]
+		return args
 	}
 	return a.parseArg(args, f)
 }
 
+// parseShort sets any boolean flags encountered to true, and will
+// parse the next argument if one of the options is a non-bool.
 func (a *Args) parseShort(args []string) []string {
 	flags := args[0][1:]
 	for _, c := range flags {
@@ -292,13 +298,15 @@ func (a *Args) parseShort(args []string) []string {
 			if f.field.Kind() == reflect.Bool {
 				f.setBool(true)
 			} else {
-				return a.parseArg(args, f)
+				// We break off here, as non-bool options can only be the last one.
+				return a.parseArg(args[1:], f)
 			}
 		}
 	}
-	return args
+	return args[1:]
 }
 
+// isValidChoice checks if choice s is in list choices.
 func isValidChoice(s string, choices []string) bool {
 	if len(choices) == 0 {
 		return true
@@ -333,12 +341,6 @@ func (a *Args) parseArg(args []string, f *Flag) []string {
 		return args[1:]
 	}
 
-	// Last arg is malformed, so we're done
-	if len(args) < 2 {
-		return args
-	}
-	slog.Msg("Setting %s and returning %v (%d)", args[1], args, len(args))
-
-	f.setValue(args[1])
-	return args[2:]
+	f.setValue(args[0])
+	return args[1:]
 }

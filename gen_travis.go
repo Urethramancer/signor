@@ -11,7 +11,6 @@ import (
 	"github.com/Urethramancer/signor/opt"
 	"github.com/Urethramancer/signor/stringer"
 	"github.com/Urethramancer/signor/structure"
-	"github.com/Urethramancer/slog"
 )
 
 type TravisCmd struct {
@@ -21,9 +20,6 @@ type TravisCmd struct {
 }
 
 func (tr *TravisCmd) Run(in []string) error {
-	slog.Msg("%#v", tr)
-	slog.Msg("Input: %v", tr.Input)
-
 	if tr.Help {
 		return errors.New(opt.ErrorUsage)
 	}
