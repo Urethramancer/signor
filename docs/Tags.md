@@ -35,6 +35,9 @@ Tool commands are keyword arguments which are specified as its own standalone ar
 ### Aliases
 Tool commands can have alternative names if the base name is too long to type all the time. Use the `aliases` tag to specify a comma-separated list of alternatives.
 
+### Environment variables
+You also have the option to use the `env` tag to specify an environment variable to read the value from. This may be useful in script-friendly programs.
+
 ## Examples
 
 ### Required option
@@ -60,6 +63,13 @@ Default options are also useful for choices. The default will be chosen if the o
 ```go
 type Options struct {
 	Colour	string	`short:"C" long:"colour" help:"A configuration file." choices:"red,green,blue" default:"blue"`
+}
+```
+
+### Option with environment variable
+```go
+type Options struct {
+	Config	string	`short:"c" help:"A configuration file." placeholder:"FILE" default:"config.json" key:"APP_CONFIG"`
 }
 ```
 

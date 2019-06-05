@@ -174,6 +174,11 @@ func (a *Args) parseField(sf reflect.StructField) {
 
 	f.IsCommand = f.CommandName != ""
 
+	envvar := sf.Tag.Get("env")
+	if envvar != "" {
+		f.setValue(os.Getenv(envvar))
+	}
+
 	c := sf.Tag.Get("choices")
 	if c != "" {
 		f.Choices = strings.Split(c, ",")
