@@ -52,7 +52,10 @@ func main() {
 		slog.Msg("Error: %s", err.Error())
 	}
 	for _, x := range ini.Order {
-		slog.Msg("[%s]: %d", x, len(ini.Sections[x].Order))
+		fields := ini.Sections[x].Fields
+		for k, v := range fields {
+			slog.Msg("%s = %s", k, v.Value)
+		}
 	}
 
 	err = a.RunCommand(false)
@@ -60,40 +63,4 @@ func main() {
 		log.Default.Msg("Error running: %s", err.Error())
 		os.Exit(2)
 	}
-
-	// srv := server.New("Test")
-	// srv.Start()
-	// <-daemon.BreakChannel()
-	// srv.Stop()
-
-	// var err error
-	// var pkg structure.Package
-	// pkg, err = structure.NewPackage("server/site.go", "structure/package.go")
-	// if err != nil {
-	// 	slog.TError("Error loading: %s", err.Error())
-	// 	return
-	// }
-
-	// pkg.MakeTags(true, true)
-	// slog.Msg("%s", pkg.String())
-	// slog.Msg("%s", pkg.ProtoString())
-
-	// err = a.RunCommand()
-	// if err != nil {
-	// 	slog.Msg("Error: %s", err.Error())
-	// }
-
-	// e := &log.Event{
-	// 	Level:    4,
-	// 	PID:      1242,
-	// 	Time:     time.Now(),
-	// 	Name:     "disk monitor",
-	// 	Hostname: "localhost",
-	// 	Source:   "/dev/md0",
-	// 	Message:  "Disk full. Less than 1MB free.",
-	// 	Extra:    nil,
-	// }
-
-	// l := log.NewLogger()
-	// l.Log(e)
 }
