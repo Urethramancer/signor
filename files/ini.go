@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/Urethramancer/signor/stringer"
 )
 
 // INI file base structure.
@@ -73,6 +75,29 @@ func LoadINI(filename string) (*INI, error) {
 		}
 	}
 	return &ini, err
+}
+
+// Saveoutputs the INI to a file.
+// If tabbed is true, the fields will be saved with a tab character prepended.
+func (ini *INI) Save(filename string, tabbed bool) error {
+	b := stringer.New()
+	count := 0
+	for _, secname := range ini.Order {
+		if count > 0 {
+			b.WriteString("\n")
+		}
+		count++
+		b.WriteStrings("[", secname, "]\n")
+		for _, key := range ini.Sections[secname].Order {
+			f := ini.Sections[secname].Fields[key]
+			if tabbed {
+				b.WriteStrings("\t", key, "=", f.Value, "\n")
+			} else {
+				b.WriteStrings(key, "=", f.Value, "\n")
+			}
+		}
+	}
+	return WriteFile(filename, []byte(b.String()))
 }
 
 // parse section properties until a new section or end of file.
@@ -163,12 +188,6 @@ func (s *INISection) AddString(key string, value string) {
 	f.SetString(key, value)
 	s.Fields[key] = &f
 	s.Order = append(s.Order, key)
-}
-
-// SaveINI outputs the INI to a file.
-// If tabbed is true, the fields will be saved with a tab character prepended.
-func (f *INIField) SaveINI(filename string, tabbed bool) error {
-	return nil
 }
 
 // GetBool returns the field as a bool.
