@@ -59,6 +59,8 @@ func LoadINI(filename string) (*INI, error) {
 			loop = false
 		} else {
 			l = l[:len(l)-1]
+			// This automatically skips comments, and really anything else
+			// unknown that isn't after the first section header.
 			if strings.HasPrefix(l, "[") && strings.HasSuffix(l, "]") {
 				s := INISection{
 					Fields: make(map[string]*INIField),
@@ -78,23 +80,36 @@ func (s *INISection) parse(r *bufio.Reader) {
 	loop := true
 	for loop {
 		next, err := r.Peek(2)
+		// EOF
 		if err != nil {
 			return
 		}
+
+		// Skip blank lines
 		if next[0] == '\n' {
 			return
 		}
+
+		// New section, so this one's done
 		if next[0] == '[' || next[1] == '[' {
 			return
 		}
+
 		p, err := r.ReadString('\n')
 		if err != nil {
 			return
 		}
+
+		// Skip comments
+		if strings.HasPrefix(p, "#") || strings.HasPrefix(p, ";") {
+			continue
+		}
+
 		a := strings.SplitN(p, "=", 2)
 		if a == nil || len(a) != 2 {
 			return
 		}
+
 		a[0] = strings.TrimSpace(a[0])
 		a[1] = strings.TrimSpace(a[1])
 		switch a[1] {
