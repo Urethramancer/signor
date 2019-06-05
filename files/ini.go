@@ -42,6 +42,12 @@ const (
 	INIString
 )
 
+func NewINI() *INI {
+	return &INI{
+		Sections: make(map[string]*INISection),
+	}
+}
+
 // LoadINI from file and take a guess at the types of each value.
 func LoadINI(filename string) (*INI, error) {
 	f, err := os.Open(filename)
@@ -50,9 +56,7 @@ func LoadINI(filename string) (*INI, error) {
 	}
 
 	defer f.Close()
-	ini := INI{
-		Sections: make(map[string]*INISection),
-	}
+	ini := NewINI()
 	r := bufio.NewReader(f)
 	loop := true
 	for loop {
@@ -64,17 +68,13 @@ func LoadINI(filename string) (*INI, error) {
 			// This automatically skips comments, and really anything else
 			// unknown that isn't after the first section header.
 			if strings.HasPrefix(l, "[") && strings.HasSuffix(l, "]") {
-				s := INISection{
-					Fields: make(map[string]*INIField),
-				}
 				name := l[1 : len(l)-1]
+				s := ini.AddSection(name)
 				s.parse(r)
-				ini.Sections[name] = &s
-				ini.Order = append(ini.Order, name)
 			}
 		}
 	}
-	return &ini, err
+	return ini, err
 }
 
 // Saveoutputs the INI to a file.
@@ -98,6 +98,15 @@ func (ini *INI) Save(filename string, tabbed bool) error {
 		}
 	}
 	return WriteFile(filename, []byte(b.String()))
+}
+
+func (ini *INI) AddSection(name string) *INISection {
+	sec := &INISection{
+		Fields: make(map[string]*INIField),
+	}
+	ini.Sections[name] = sec
+	ini.Order = append(ini.Order, name)
+	return sec
 }
 
 // parse section properties until a new section or end of file.
