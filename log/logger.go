@@ -164,3 +164,35 @@ func (l *Logger) SetLogOut(log byte, files, servers []string) {
 		}
 	}
 }
+
+// Warn is meant to be deferred with closing operations which might return an error.
+// If t is true, the output will be timestamped with the default format of the logger.
+// Any error returns 1 to the operating system, which is considered a warning/minor error.
+func (l *Logger) Warn(err error, t bool) {
+	if err == nil {
+		return
+	}
+
+	if t {
+		l.TErr("Error: %s", err.Error())
+	} else {
+		l.Err("Error: %s", err.Error())
+	}
+	os.Exit(1)
+}
+
+// Fail is meant to be deferred with closing operations which might return an error.
+// If t is true, the output will be timestamped with the default format of the logger.
+// Any error returns 2 to the operating system, which is considered a major error.
+func (l *Logger) Fail(err error, t bool) {
+	if err == nil {
+		return
+	}
+
+	if t {
+		l.TErr("Error: %s", err.Error())
+	} else {
+		l.Err("Error: %s", err.Error())
+	}
+	os.Exit(2)
+}
