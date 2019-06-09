@@ -4,13 +4,8 @@ go:
   - 1.12
 
 install:
-    - go get github.com/Urethramancer/signor/files
-    - go get github.com/Urethramancer/signor/log
-    - go get github.com/Urethramancer/signor/opt
-    - go get github.com/Urethramancer/signor/stringer
-    - go get github.com/Urethramancer/signor/structure
-    - go get github.com/Urethramancer/slog
-    - go get github.com/gorilla/mux
+    - go get github.com/Urethramancer/daemon
+    - go get github.com/Urethramancer/signor
 
 include:
   - os: linux
@@ -19,3 +14,4 @@ include:
       directories:
         - $HOME/.cache/go-build
         - $HOME/gopath/pkg/mod
+
