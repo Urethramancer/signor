@@ -62,7 +62,7 @@ func (s *Server) SetLogger(l *log.Logger) {
 }
 
 // AddWebServer to the server.
-func (s *Server) AddWebServer(address, port string) *web.Web {
+func (s *Server) AddWebServer(address, secureport, otherport string) *web.Web {
 	cfg := &tls.Config{
 		MinVersion:               tls.VersionTLS12,
 		NextProtos:               []string{"http/1.1"},
@@ -79,7 +79,7 @@ func (s *Server) AddWebServer(address, port string) *web.Web {
 		},
 	}
 
-	w := web.New(address, port, s.Logger, cfg)
+	w := web.New(address, secureport, otherport, s.Logger, cfg)
 	s.web = w
 	return w
 }

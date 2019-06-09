@@ -11,7 +11,7 @@ import (
 func main() {
 	s := server.New("example")
 	s.Start()
-	w := s.AddWebServer("127.0.0.1", "10000")
+	w := s.AddWebServer("127.0.0.1", "10000", "11000")
 	site := &web.Site{
 		Domain:      "localhost",
 		Certificate: "cert.pem",

@@ -88,7 +88,7 @@ func (w *Web) AddSite(s *Site) error {
 func (w *Web) Start() error {
 	w.RebuildCertificates()
 	var err error
-	listener, err := tls.Listen("tcp", net.JoinHostPort(w.Address, w.Port), w.server.TLSConfig)
+	listener, err := tls.Listen("tcp", net.JoinHostPort(w.Address, w.SecurePort), w.server.TLSConfig)
 	if err != nil {
 		return err
 	}
