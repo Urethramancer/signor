@@ -5,6 +5,8 @@ package log
 
 import (
 	"fmt"
+	"io/ioutil"
+	oldlog "log"
 	"os"
 	"strings"
 )
@@ -13,6 +15,7 @@ import (
 var Default *Logger
 
 func init() {
+	oldlog.SetOutput(ioutil.Discard)
 	Default = NewLogger()
 }
 
@@ -26,6 +29,16 @@ type Logger struct {
 	outFiles []*os.File
 	validOut []bool
 	logDst   byte
+}
+
+// LogShortcuts for the lazy. Embed these for convenience.
+type LogShortcuts struct {
+	// Logger structure.
+	Logger *Logger
+	// L logs to stdout by default.
+	L func(string, ...interface{})
+	// E logs to stderr by default.
+	E func(string, ...interface{})
 }
 
 const (
@@ -73,6 +86,11 @@ func (l *Logger) Msg(f string, v ...interface{}) {
 	if l.logDst&O_FILE == O_FILE {
 		fmt.Fprint(l.outFiles[0], b.String())
 	}
+}
+
+// Printf wraps Msg for compatibility with some other loggers.
+func (l *Logger) Printf(f string, v ...interface{}) {
+	l.Msg(f, v...)
 }
 
 // TMsg prints arbitrary formatted messages to the configured message output(s),
