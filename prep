@@ -1,0 +1,2 @@
+#!/bin/bash
+./signor gen travis *.go */*.go */*/*.go>.travis.yml
