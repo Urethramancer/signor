@@ -80,7 +80,6 @@ func (w *Web) AddSite(s *Site) error {
 	//TODO: Let's Encrypt support.
 	w.AddCertificate(cert)
 	w.sites[s.Domain] = s
-	w.domains[s.Domain] = s.handler
 	http.HandleFunc(s.Domain+"/", s.DefaultHandler)
 	return nil
 }
