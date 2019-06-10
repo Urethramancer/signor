@@ -19,8 +19,8 @@ type TravisCmd struct {
 	Input []string `help:"Input Go source file to read imports from." placeholder:"SOURCE"`
 }
 
-func (tr *TravisCmd) Run(in []string) error {
-	if tr.Help {
+func (cmd *TravisCmd) Run(in []string) error {
+	if cmd.Help {
 		return errors.New(opt.ErrorUsage)
 	}
 
@@ -33,11 +33,11 @@ func (tr *TravisCmd) Run(in []string) error {
 	yml := stringer.New()
 	yml.WriteStrings("language: go\n\ngo:\n  - ", ver, "\n")
 
-	if tr.Input == nil || len(tr.Input) < 0 {
+	if cmd.Input == nil || len(cmd.Input) < 0 {
 		return errors.New("not enough arguments")
 	}
 
-	pkg, err := structure.NewPackage(tr.Input...)
+	pkg, err := structure.NewPackage(cmd.Input...)
 	if err != nil {
 		return err
 	}
@@ -56,10 +56,10 @@ func (tr *TravisCmd) Run(in []string) error {
 		"        - $HOME/gopath/pkg/mod\n",
 	)
 
-	if tr.Name == "" {
+	if cmd.Name == "" {
 		log.Default.Msg(yml.String())
 	} else {
-		return files.WriteFile(tr.Name, []byte(yml.String()))
+		return files.WriteFile(cmd.Name, []byte(yml.String()))
 	}
 	return nil
 }
