@@ -11,9 +11,14 @@ import (
 func main() {
 	s := server.New("example")
 	s.Start()
-	// Create a plain web server with two sites.
-	w := s.AddWebServer("127.0.0.1", "11000", false)
-	site := &web.Site{Domain: "localhost"}
+	// Create a secure web server with two sites.
+	w := s.AddWebServer("127.0.0.1", "10000", true)
+	site := &web.Site{
+		Domain:      "localhost",
+		Certificate: "cert.pem",
+		Key:         "key.pem",
+		Owner:       "orb",
+	}
 
 	var err error
 	err = w.AddSite(site)
@@ -22,14 +27,19 @@ func main() {
 		os.Exit(2)
 	}
 
-	site = &web.Site{Domain: "localhost.com"}
+	site = &web.Site{
+		Domain:      "localhost.com",
+		Certificate: "cert.pem",
+		Key:         "key.pem",
+		Owner:       "orb",
+	}
 	err = w.AddSite(site)
 	if err != nil {
 		s.E("Error adding web domain: %s", err.Error())
 		os.Exit(2)
 	}
 
-	s.StartWeb()
+	err = w.Start()
 	if err != nil {
 		s.E("Error starting web server: %s", err.Error())
 		os.Exit(2)
@@ -37,10 +47,11 @@ func main() {
 
 	// Wait for ctrl-c
 	<-daemon.BreakChannel()
-	err = s.Stop()
+	err = w.Stop()
 	if err != nil {
-		s.E("Error stopping server(s): %s", err.Error())
+		s.E("Error stopping web server: %s", err.Error())
 		os.Exit(2)
 	}
-	s.L("Stopped.")
+
+	s.Stop()
 }
