@@ -1,0 +1,7 @@
+{
+	"domain": "localhost.com",
+	"certificate": "cert.pem",
+	"key": "key.pem",
+	"secure": true,
+	"owner": "you"
+}
