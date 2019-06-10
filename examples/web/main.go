@@ -5,27 +5,22 @@ import (
 
 	"github.com/Urethramancer/daemon"
 	"github.com/Urethramancer/signor/server"
-	"github.com/Urethramancer/signor/server/web"
 )
 
 func main() {
-	s := server.New("example")
-	s.Start()
-	// Create a plain web server with two sites.
-	w := s.AddWebServer("127.0.0.1", "11000", false)
-	site := &web.Site{Domain: "localhost"}
-
 	var err error
-	err = w.AddSite(site)
+	s := server.New("example")
+	err = s.Start()
 	if err != nil {
-		s.E("Error adding web domain: %s", err.Error())
+		s.E("Error starting server: %s", err.Error())
 		os.Exit(2)
 	}
 
-	site = &web.Site{Domain: "localhost.com"}
-	err = w.AddSite(site)
+	// Create a plain web server with two sites.
+	w := s.AddWebServer("127.0.0.1", "11000", false)
+	err = w.LoadSites("sites")
 	if err != nil {
-		s.E("Error adding web domain: %s", err.Error())
+		s.L("Error loading sites: %s", err.Error())
 		os.Exit(2)
 	}
 

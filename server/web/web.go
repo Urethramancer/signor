@@ -3,11 +3,18 @@ package web
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
+	"os"
+	"path/filepath"
 	"sync"
 	"time"
+
+	"github.com/Urethramancer/signor/files"
 
 	"github.com/Urethramancer/signor/log"
 )
@@ -102,6 +109,11 @@ func (w *Web) RebuildCertificates() error {
 // AddSite to a web server.
 // This is done on the fly without need of any restarting.
 func (w *Web) AddSite(s *Site) error {
+	_, ok := w.sites[s.Domain]
+	if ok {
+		return errors.New(ErrSiteExists)
+	}
+
 	if w.secure {
 		cert, err := tls.LoadX509KeyPair(s.Certificate, s.Key)
 		if err != nil {
@@ -175,6 +187,28 @@ func (w *Web) defaultHandler(wr http.ResponseWriter, r *http.Request) {
 
 // LoadSites loads sites from JSON files in the specified path (non-recursively).
 func (w *Web) LoadSites(path string) error {
+	if !files.DirExists(path) {
+		return os.ErrNotExist
+	}
 
+	dir, err := ioutil.ReadDir(path)
+	if err != nil {
+		return err
+	}
+
+	for _, fi := range dir {
+		if fi.IsDir() {
+			continue
+		}
+		fn := filepath.Join(path, fi.Name())
+		in, err := ioutil.ReadFile(fn)
+		if err != nil {
+			return err
+		}
+		var site Site
+		json.Unmarshal(in, &site)
+		w.L("Web: Loaded %s", site.Domain)
+		w.AddSite(&site)
+	}
 	return nil
 }
