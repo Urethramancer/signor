@@ -17,5 +17,9 @@ type RESTCmd struct {
 }
 
 func (cmd *RESTCmd) Run(in []string) error {
-	return errors.New(opt.ErrorUsage)
+	if cmd.Help || cmd.Output == "" {
+		return errors.New(opt.ErrorUsage)
+	}
+
+	return nil
 }
