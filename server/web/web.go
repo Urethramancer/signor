@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/Urethramancer/signor/files"
-
 	"github.com/Urethramancer/signor/log"
 )
 
@@ -26,20 +25,21 @@ type Web struct {
 	Address string `json:"address"`
 	// Port is optional, and will default to 80 or 443, depending on presence of certificates.
 	Port string `json:"secureport,omitempty"`
+	// SitePath is the directory where site configurations are stored.
+	SitePath string `json:"sites,omitempty"`
 
 	//
 	// Internals
 	//
-	secureSites map[string]*Site
-	sites       map[string]*Site
-	server      *http.Server
+	sites  map[string]*Site
+	server *http.Server
 	log.LogShortcuts
 	secure  bool
 	running bool
 }
 
 // New creates a web server, configured with reasonable timeouts and a default handlers.
-// Use AddSite() to add handlers for domains.
+// Use AddSite() or LoadSites() to add handlers for domains.
 func New(address, port string, logger *log.Logger, cfg *tls.Config) *Web {
 	if port == "" {
 		if cfg == nil {
@@ -94,7 +94,7 @@ func (w *Web) AddCertificate(cert tls.Certificate) {
 func (w *Web) RebuildCertificates() error {
 	w.Lock()
 	defer w.Unlock()
-	for _, s := range w.secureSites {
+	for _, s := range w.sites {
 		cert, err := tls.LoadX509KeyPair(s.Certificate, s.Key)
 		if err != nil {
 			return err
