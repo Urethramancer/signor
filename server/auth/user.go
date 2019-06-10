@@ -13,4 +13,8 @@ type User struct {
 	Fullnames []string `json:"fullnames,omitempty"`
 	// Title if applicable.
 	Title string `json:"title,omitempty"`
+	// Phone number is optional.
+	Phone string `json:"phone,omitempty"`
+	// Address is optional.
+	Address []string `json:"userid,omitempty"`
 }
