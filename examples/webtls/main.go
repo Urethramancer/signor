@@ -5,53 +5,37 @@ import (
 
 	"github.com/Urethramancer/daemon"
 	"github.com/Urethramancer/signor/server"
-	"github.com/Urethramancer/signor/server/web"
 )
 
 func main() {
-	s := server.New("example")
-	s.Start()
-	// Create a secure web server with two sites.
-	w := s.AddWebServer("127.0.0.1", "10000", true)
-	site := &web.Site{
-		Domain:      "localhost",
-		Certificate: "cert.pem",
-		Key:         "key.pem",
-		Owner:       "orb",
-	}
-
 	var err error
-	err = w.AddSite(site)
+	s := server.New("secure example")
+	err = s.Start()
 	if err != nil {
-		s.E("Error adding web domain: %s", err.Error())
+		s.E("Error starting server: %s", err.Error())
 		os.Exit(2)
 	}
 
-	site = &web.Site{
-		Domain:      "localhost.com",
-		Certificate: "cert.pem",
-		Key:         "key.pem",
-		Owner:       "orb",
-	}
-	err = w.AddSite(site)
+	// Create a plain web server with two sites.
+	w, err := s.LoadWebServer("web.json")
 	if err != nil {
-		s.E("Error adding web domain: %s", err.Error())
+		s.L("Error starting web server: %s", err.Error())
 		os.Exit(2)
 	}
 
-	err = w.Start()
+	err = w.LoadSites()
 	if err != nil {
-		s.E("Error starting web server: %s", err.Error())
+		s.L("Error loading sites: %s", err.Error())
 		os.Exit(2)
 	}
 
+	s.StartWeb()
 	// Wait for ctrl-c
 	<-daemon.BreakChannel()
-	err = w.Stop()
+	err = s.Stop()
 	if err != nil {
-		s.E("Error stopping web server: %s", err.Error())
+		s.E("Error stopping server(s): %s", err.Error())
 		os.Exit(2)
 	}
-
-	s.Stop()
+	s.L("Stopped.")
 }

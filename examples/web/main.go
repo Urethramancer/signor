@@ -17,19 +17,19 @@ func main() {
 	}
 
 	// Create a plain web server with two sites.
-	w := s.AddWebServer("127.0.0.1", "11000", false)
-	err = w.LoadSites("sites")
+	w, err := s.LoadWebServer("web.json")
+	if err != nil {
+		s.L("Error starting web server: %s", err.Error())
+		os.Exit(2)
+	}
+
+	err = w.LoadSites()
 	if err != nil {
 		s.L("Error loading sites: %s", err.Error())
 		os.Exit(2)
 	}
 
 	s.StartWeb()
-	if err != nil {
-		s.E("Error starting web server: %s", err.Error())
-		os.Exit(2)
-	}
-
 	// Wait for ctrl-c
 	<-daemon.BreakChannel()
 	err = s.Stop()
