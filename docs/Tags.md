@@ -30,7 +30,7 @@ The `choices` tag can contain a comma-separated list of allowed inputs. Goes wel
 The `placeholder` tag provides a keyword to show in the usage output instead of the string for the input type. Recommended for most non-boolean options.
 
 ## Commands
-Tool commands are keyword arguments which are specified as its own standalone argument. Only one top-level command can be called in one invocation, but they can be nested with their own sub-commands, each having its own structure with options and even deeper commands. A good example of this is Git.
+Tool commands are keyword arguments which are specified as their own standalone arguments. Only one top-level command can be called in one invocation, but they can be nested with their own sub-commands, each having its own structure with options and even deeper commands. A good example of this is Git.
 
 ### Aliases
 Tool commands can have alternative names if the base name is too long to type all the time. Use the `aliases` tag to specify a comma-separated list of alternatives.
