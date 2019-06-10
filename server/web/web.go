@@ -21,56 +21,91 @@ import (
 type Web struct {
 	sync.RWMutex
 	sync.WaitGroup
+	log.LogShortcuts
+	http.Server
+
 	// Address to bind the web server to.
 	Address string `json:"address"`
 	// Port is optional, and will default to 80 or 443, depending on presence of certificates.
-	Port string `json:"secureport,omitempty"`
+	Port string `json:"port,omitempty"`
 	// SitePath is the directory where site configurations are stored.
 	SitePath string `json:"sites,omitempty"`
+	// Secure servers prepare a default TLS configuration.
+	Secure bool `json:"secure,omitempty"`
 
 	//
 	// Internals
 	//
-	sites  map[string]*Site
-	server *http.Server
-	log.LogShortcuts
-	secure  bool
+	sites   map[string]*Site
 	running bool
 }
 
 // New creates a web server, configured with reasonable timeouts and a default handlers.
 // Use AddSite() or LoadSites() to add handlers for domains.
-func New(address, port string, logger *log.Logger, cfg *tls.Config) *Web {
-	if port == "" {
-		if cfg == nil {
-			port = "80"
+func New(address, port string, logger *log.Logger, secure bool) *Web {
+	w := Web{
+		Address: address,
+		Port:    port,
+		Secure:  secure,
+	}
+	w.Init(logger)
+	return &w
+}
+
+// Init sets up basics for a web server.
+func (w *Web) Init(l *log.Logger) {
+	if w.Port == "" {
+		if !w.Secure {
+			w.Port = "80"
 		} else {
-			port = "443"
+			w.Port = "443"
 		}
 	}
 
-	w := Web{
-		sites:   make(map[string]*Site),
-		Address: address,
-		Port:    port,
-	}
-	w.Logger = logger
-	w.L = logger.TMsg
-	w.E = logger.TErr
+	w.sites = make(map[string]*Site)
+	w.Logger = l
+	w.L = l.TMsg
+	w.E = l.TErr
 
-	w.server = &http.Server{
-		IdleTimeout:  time.Second * 30,
-		ReadTimeout:  time.Second * 10,
-		WriteTimeout: time.Second * 10,
-		TLSConfig:    cfg,
-	}
+	w.IdleTimeout = time.Second * 30
+	w.ReadTimeout = time.Second * 10
+	w.WriteTimeout = time.Second * 10
 
-	if cfg != nil {
-		w.secure = true
+	if w.Secure {
+		w.TLSConfig = &tls.Config{
+			MinVersion:               tls.VersionTLS12,
+			NextProtos:               []string{"http/1.1"},
+			CurvePreferences:         []tls.CurveID{tls.CurveP521, tls.CurveP384, tls.CurveP256},
+			PreferServerCipherSuites: true,
+			CipherSuites: []uint16{
+				tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+				tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+				tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
+				tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
+				tls.TLS_AES_128_GCM_SHA256,
+				tls.TLS_AES_256_GCM_SHA384,
+				tls.TLS_CHACHA20_POLY1305_SHA256,
+			},
+		}
 	}
-
 	http.HandleFunc("/", w.defaultHandler)
-	return &w
+}
+
+// NewFromFile creates a web server based on a JSON configuration file.
+func NewFromFile(name string, logger *log.Logger) (*Web, error) {
+	in, err := ioutil.ReadFile(name)
+	if err != nil {
+		return nil, err
+	}
+
+	var w Web
+	err = json.Unmarshal(in, &w)
+	if err != nil {
+		return nil, err
+	}
+
+	w.Init(logger)
+	return &w, nil
 }
 
 // SetLogger changes the logger object and sets the message shortcuts for convenience.
@@ -84,16 +119,12 @@ func (w *Web) SetLogger(l *log.Logger) {
 
 // AddCertificate from loaded certificate.
 func (w *Web) AddCertificate(cert tls.Certificate) {
-	w.Lock()
-	defer w.Unlock()
-	w.server.TLSConfig.Certificates = append(w.server.TLSConfig.Certificates, cert)
-	w.server.TLSConfig.BuildNameToCertificate()
+	w.TLSConfig.Certificates = append(w.TLSConfig.Certificates, cert)
+	w.TLSConfig.BuildNameToCertificate()
 }
 
 // RebuildCertificates reloads the certificates from all sites.
 func (w *Web) RebuildCertificates() error {
-	w.Lock()
-	defer w.Unlock()
 	for _, s := range w.sites {
 		cert, err := tls.LoadX509KeyPair(s.Certificate, s.Key)
 		if err != nil {
@@ -102,7 +133,7 @@ func (w *Web) RebuildCertificates() error {
 
 		w.AddCertificate(cert)
 	}
-	w.server.TLSConfig.BuildNameToCertificate()
+	w.TLSConfig.BuildNameToCertificate()
 	return nil
 }
 
@@ -114,7 +145,7 @@ func (w *Web) AddSite(s *Site) error {
 		return errors.New(ErrSiteExists)
 	}
 
-	if w.secure {
+	if w.Secure {
 		cert, err := tls.LoadX509KeyPair(s.Certificate, s.Key)
 		if err != nil {
 			return err
@@ -130,9 +161,9 @@ func (w *Web) AddSite(s *Site) error {
 }
 
 // Start the webserver.
-func (w *Web) Start() error {
+func (w *Web) Start() {
 	if w.running {
-		return nil
+		return
 	}
 
 	w.Lock()
@@ -141,27 +172,43 @@ func (w *Web) Start() error {
 
 	var err error
 	addr := net.JoinHostPort(w.Address, w.Port)
-	w.L("Starting web server on %s", addr)
-	if w.secure {
-		w.RebuildCertificates()
-		listener, err := tls.Listen("tcp", addr, w.server.TLSConfig)
+	w.L("Starting web server on %s (secure=%t)", addr, w.Secure)
+	if w.Secure {
+		err = w.RebuildCertificates()
+		if err != nil {
+			w.E("Certificate error: %s", err.Error())
+			return
+		}
+
+		listener, err := tls.Listen("tcp", addr, w.TLSConfig)
 		if err != nil {
 			w.running = false
-			return err
+			w.E("TLS listener error: %s", err.Error())
+			return
 		}
 
 		w.Add(1)
-		return w.server.Serve(listener)
+		err = w.Serve(listener)
+		if err != nil {
+			w.E("Web server error: %s", err.Error())
+		}
+		w.Done()
+		return
 	}
 
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
 		w.running = false
-		return err
+		w.E("Listener error: %s", err.Error())
+		return
 	}
 
 	w.Add(1)
-	return w.server.Serve(listener)
+	err = w.Serve(listener)
+	if err != nil {
+		w.E("Web server error: %s", err.Error())
+	}
+	w.Done()
 }
 
 // Stop the webserver and try to wait until all connections are done.
@@ -170,8 +217,7 @@ func (w *Web) Stop() error {
 	w.L("Stopping web server on %s:%s", w.Address, w.Port)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*500)
 	defer cancel()
-	err := w.server.Shutdown(ctx)
-	w.Done()
+	err := w.Shutdown(ctx)
 	if err != nil {
 		return err
 	}
@@ -185,13 +231,13 @@ func (w *Web) defaultHandler(wr http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(wr, "No site configured on %s", r.Host)
 }
 
-// LoadSites loads sites from JSON files in the specified path (non-recursively).
-func (w *Web) LoadSites(path string) error {
-	if !files.DirExists(path) {
+// LoadSites from JSON files in the site config directory (non-recursively).
+func (w *Web) LoadSites() error {
+	if !files.DirExists(w.SitePath) {
 		return os.ErrNotExist
 	}
 
-	dir, err := ioutil.ReadDir(path)
+	dir, err := ioutil.ReadDir(w.SitePath)
 	if err != nil {
 		return err
 	}
@@ -200,13 +246,17 @@ func (w *Web) LoadSites(path string) error {
 		if fi.IsDir() {
 			continue
 		}
-		fn := filepath.Join(path, fi.Name())
+		fn := filepath.Join(w.SitePath, fi.Name())
 		in, err := ioutil.ReadFile(fn)
 		if err != nil {
 			return err
 		}
 		var site Site
-		json.Unmarshal(in, &site)
+		err = json.Unmarshal(in, &site)
+		if err != nil {
+			return err
+		}
+
 		w.L("Web: Loaded %s", site.Domain)
 		w.AddSite(&site)
 	}
