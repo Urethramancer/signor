@@ -164,7 +164,7 @@ func (w *Web) Start() error {
 	return w.server.Serve(listener)
 }
 
-// Stop the webserver and try to wait till all connections are done.
+// Stop the webserver and try to wait until all connections are done.
 // Give up after half a second.
 func (w *Web) Stop() error {
 	w.L("Stopping web server on %s:%s", w.Address, w.Port)
