@@ -164,6 +164,10 @@ func (a *Args) parseField(sf reflect.StructField) {
 		Default:     sf.Tag.Get("default"),
 	}
 
+	if f.Default != "" {
+		f.setValue(f.Default)
+	}
+
 	switch f.field.Kind() {
 	case reflect.Slice:
 		f.IsSlice = true
