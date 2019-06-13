@@ -3,7 +3,7 @@ package auth
 // User structure for the main system.
 type User struct {
 	// ID is a unique identifier in the database.
-	ID int64 `json:"id"`
+	ID uint64 `json:"id"`
 	// Name is the username for logins and the default display name.
 	Name string `json:"name"`
 	// Email is used for verification and password retrieval.
