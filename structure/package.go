@@ -1,8 +1,6 @@
 package structure
 
 import (
-	"go/ast"
-	"go/token"
 	"io/ioutil"
 	"sort"
 	"strings"
@@ -19,13 +17,10 @@ type Package struct {
 	Name     string
 	contents string
 
-	imports         []string
 	InternalImports []string
 	ExternalImports []string
 
 	Structs []*Structure
-	fset    *token.FileSet
-	f       *ast.File
 }
 
 func NewPackage(filenames ...string) (*Package, error) {
@@ -356,7 +351,7 @@ func (pkg *Package) MergeExternalImports() []string {
 		i = strings.Join(a[:3], "/")
 		m[i] = true
 	}
-	for k, _ := range m {
+	for k := range m {
 		list = append(list, k)
 	}
 	sort.Strings(list)

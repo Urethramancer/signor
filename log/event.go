@@ -58,16 +58,16 @@ func (e *Event) Fmt(f string) string {
 			case fmtTime:
 				e.WriteString(NowString())
 			case fmtName:
-				e.WriteString(fmt.Sprintf("%s", e.Name))
+				e.WriteString(e.Name)
 			case fmtHost:
-				e.WriteString(fmt.Sprintf("%s", e.Hostname))
+				e.WriteString(e.Hostname)
 			case fmtSource:
-				e.WriteString(fmt.Sprintf("%s", e.Source))
+				e.WriteString(e.Source)
 			case fmtMessage:
-				e.WriteString(fmt.Sprintf("%s", e.Message))
+				e.WriteString(e.Message)
 			case fmtExtra:
 				s := strings.Join(e.Extra, ",")
-				e.WriteString(fmt.Sprintf("%s", s))
+				e.WriteString(s)
 			default:
 				// This skips fmt keywords, which could be useful.
 				e.WriteString(key)

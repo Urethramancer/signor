@@ -235,8 +235,6 @@ func (a *Args) parseField(sf reflect.StructField) {
 			}
 		}
 	}
-
-	return
 }
 
 // parseArgs from CLI.
