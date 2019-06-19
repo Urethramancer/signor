@@ -6,7 +6,7 @@
 	],
 	"tasks": [
 		{
-			"label": "Build Esquire (Release)",
+			"label": "Build Release",
 			"command": "go",
 			"args": [
 				"build",
@@ -27,7 +27,7 @@
 			}
 		},
 		{
-			"label": "Build Esquire (Debug)",
+			"label": "Build Debug",
 			"command": "go",
 			"args": [
 				"build"
