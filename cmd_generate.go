@@ -8,9 +8,10 @@ import (
 
 type GenerateCmd struct {
 	opt.DefaultHelp
-	Travis TravisCmd `command:"travis" help:"Generate .travis.yml files for GitHub projects."`
-	REST   RESTCmd   `command:"rest" help:"Generate REST code from tagged structures."`
-	DB     DBCmd     `command:"database" help:"Generate database schema from tagged structures." aliases:"db"`
+	Travis TravisCmd    `command:"travis" help:"Generate .travis.yml files for GitHub projects."`
+	REST   RESTCmd      `command:"rest" help:"Generate REST code from tagged structures."`
+	DB     DBCmd        `command:"database" help:"Generate database schema from tagged structures." aliases:"db"`
+	Config CmdGenConfig `command:"config" aliases:"cfg" help:"Generate database schema from tagged structures."`
 }
 
 func (cmd *GenerateCmd) Run(in []string) error {
