@@ -14,13 +14,13 @@ import (
 )
 
 type TravisCmd struct {
-	Help  bool     `short:"h" long:"help" help:"Show usage."`
+	opt.DefaultHelp
 	Name  string   `short:"o" long:"output" help:"Filename to save the YAML file as." placeholder:"FILE"`
 	Input []string `help:"Input Go source file to read imports from." placeholder:"SOURCE"`
 }
 
 func (cmd *TravisCmd) Run(in []string) error {
-	if cmd.Help {
+	if cmd.Help || len(cmd.Input) == 0 {
 		return errors.New(opt.ErrorUsage)
 	}
 
@@ -32,10 +32,6 @@ func (cmd *TravisCmd) Run(in []string) error {
 
 	yml := stringer.New()
 	yml.WriteStrings("language: go\n\ngo:\n  - ", ver, "\n")
-
-	if cmd.Input == nil || len(cmd.Input) < 0 {
-		return errors.New("not enough arguments")
-	}
 
 	pkg, err := structure.NewPackage(cmd.Input...)
 	if err != nil {
