@@ -116,12 +116,12 @@ func (f *Field) String() string {
 	}
 
 	if f.Tags.JSON.Name != "" {
-		b.WriteI("\t", "`json:", '"')
+		b.WriteStrings("\t", "`json:\"")
 		b.WriteString(f.Tags.JSON.Name)
 		if f.Tags.JSON.Omitempty {
 			b.WriteString(",omitempty")
 		}
-		b.WriteI('"', "`")
+		b.WriteString("\"`")
 	}
 	return b.String()
 }
