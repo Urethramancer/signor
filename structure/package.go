@@ -5,6 +5,8 @@ import (
 	"sort"
 	"strings"
 	"text/scanner"
+
+	"github.com/Urethramancer/signor/stringer"
 )
 
 /*
@@ -315,10 +317,24 @@ func (pkg *Package) MakeTags(json, omitempty bool) {
 }
 
 func (pkg *Package) String() string {
-	var b strings.Builder
-	b.WriteString("package ")
-	b.WriteString(pkg.Name)
-	b.WriteString("\n\n")
+	b := stringer.New()
+	b.WriteStrings("package ", pkg.Name, "\n\n")
+
+	b.WriteString("import (\n")
+	if len(pkg.InternalImports) > 0 {
+		for _, inc := range pkg.InternalImports {
+			b.WriteStrings("\t", inc, "\n")
+		}
+	}
+
+	if len(pkg.ExternalImports) > 0 {
+		b.WriteString("\n")
+		for _, inc := range pkg.ExternalImports {
+			b.WriteStrings("\t", inc, "\n")
+		}
+	}
+	b.WriteString(")\n\n")
+
 	for _, st := range pkg.Structs {
 		b.WriteString(st.String())
 		b.WriteString("\n")
