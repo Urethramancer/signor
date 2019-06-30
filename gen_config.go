@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"path/filepath"
 	"strings"
 
 	"github.com/Urethramancer/cross"
@@ -98,12 +99,15 @@ func (cmd *CmdGenConfig) Run(in []string) error {
 		}
 	}
 
-	printHeader(cmd.Output + ".go:")
-	m("// Package %s loads and saves the %s structure.", pkg.Name)
-	m("%s", pkg.String())
-	printHeader("Config functions")
+	path := filepath.Join(cmd.Output, cmd.Output+".go")
+	printHeader(path)
+	m("// Package %s loads and saves the %s structure.", pkg.Name, stlist[0])
+	m("\n%s\n%s", jsonHeader, pkg.String())
+	funcs := strings.ReplaceAll(jsonLoader, "$STRUCT$", stlist[0])
+	m("%s", funcs)
 
-	printHeader("commands.go")
+	path = filepath.Join(cmd.Output, "commands.go")
+	printHeader(path)
 	for _, st := range stlist {
 		commands.WriteStrings("type ", st, "GetCommands struct {\n")
 		commands.WriteStrings(
@@ -142,7 +146,8 @@ func (cmd *CmdGenConfig) Run(in []string) error {
 		commands.WriteStrings("}\n\n")
 	}
 	m("%s", commands.String())
-	printHeader("handlers.go")
+	path = filepath.Join(cmd.Output, "handlers.go")
+	printHeader(path)
 	m("%s", handlers.String())
 	return nil
 }
