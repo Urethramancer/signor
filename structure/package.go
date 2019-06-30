@@ -323,7 +323,7 @@ func (pkg *Package) String() string {
 	b.WriteString("import (\n")
 	if len(pkg.InternalImports) > 0 {
 		for _, inc := range pkg.InternalImports {
-			b.WriteStrings("\t", inc, "\n")
+			b.WriteI("\t", "\"", inc, "\"", "\n")
 		}
 	}
 
