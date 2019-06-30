@@ -16,7 +16,7 @@ import (
 // CmdGenConfig generates configuration file loading, saving and tool commands.
 type CmdGenConfig struct {
 	opt.DefaultHelp
-	Input  string `help:"Input Go source file to read imports from." placeholder:"SOURCE"`
+	Input  string `help:"Input Go source file to generate config handler from. Only the first structure and those embedded in it will be considered." placeholder:"SOURCE"`
 	Output string `help:"Output path." placeholder:"PATH" default:"config"`
 }
 
@@ -65,6 +65,7 @@ func (cmd *CmdGenConfig) Run(in []string) error {
 	}
 
 	m := log.Default.Msg
+	config := stringer.New()
 	commands := stringer.New()
 	handlers := stringer.New()
 	embedded := make(SubStructs)
@@ -100,17 +101,20 @@ func (cmd *CmdGenConfig) Run(in []string) error {
 		}
 	}
 
-	path := filepath.Join(cmd.Output, cmd.Output+".go")
-	printHeader(path)
-	m("// Package %s loads and saves the %s structure.", pkg.Name, stlist[0])
+	var src []byte
+
 	pkg.InternalImports = append(pkg.InternalImports, "encoding/json")
 	pkg.InternalImports = append(pkg.InternalImports, "io/ioutil")
-	m("%s", pkg.String())
+	config.WriteStrings(
+		"// Package ", pkg.Name,
+		" loads and saves the ", stlist[0],
+		" structure.\n",
+		pkg.String(),
+		"\n",
+	)
 	funcs := strings.ReplaceAll(jsonLoader, "$STRUCT$", stlist[0])
-	m("%s", funcs)
+	config.WriteString(funcs)
 
-	path = filepath.Join(cmd.Output, "commands.go")
-	printHeader(path)
 	for _, st := range stlist {
 		commands.WriteStrings("type ", st, "GetCommands struct {\n")
 		commands.WriteStrings(
@@ -149,15 +153,29 @@ func (cmd *CmdGenConfig) Run(in []string) error {
 		commands.WriteStrings("}\n\n")
 	}
 
-	src, err := format.Source([]byte(commands.String()))
+	path := filepath.Join(cmd.Output, cmd.Output+".go")
+	printHeader(path)
+	src, err = format.Source([]byte(config.String()))
 	if err != nil {
 		return err
 	}
-
 	m("%s", src)
+
+	path = filepath.Join(cmd.Output, "commands.go")
+	printHeader(path)
+	src, err = format.Source([]byte(commands.String()))
+	if err != nil {
+		return err
+	}
+	m("%s", src)
+
 	path = filepath.Join(cmd.Output, "handlers.go")
 	printHeader(path)
-	m("%s", handlers.String())
+	src, err = format.Source([]byte(handlers.String()))
+	if err != nil {
+		return err
+	}
+	m("%s", src)
 	return nil
 }
 
