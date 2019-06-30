@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"go/format"
 	"path/filepath"
 	"strings"
 
@@ -102,7 +103,9 @@ func (cmd *CmdGenConfig) Run(in []string) error {
 	path := filepath.Join(cmd.Output, cmd.Output+".go")
 	printHeader(path)
 	m("// Package %s loads and saves the %s structure.", pkg.Name, stlist[0])
-	m("\n%s\n%s", jsonHeader, pkg.String())
+	pkg.InternalImports = append(pkg.InternalImports, "encoding/json")
+	pkg.InternalImports = append(pkg.InternalImports, "io/ioutil")
+	m("%s", pkg.String())
 	funcs := strings.ReplaceAll(jsonLoader, "$STRUCT$", stlist[0])
 	m("%s", funcs)
 
@@ -145,7 +148,13 @@ func (cmd *CmdGenConfig) Run(in []string) error {
 		}
 		commands.WriteStrings("}\n\n")
 	}
-	m("%s", commands.String())
+
+	src, err := format.Source([]byte(commands.String()))
+	if err != nil {
+		return err
+	}
+
+	m("%s", src)
 	path = filepath.Join(cmd.Output, "handlers.go")
 	printHeader(path)
 	m("%s", handlers.String())
@@ -175,7 +184,7 @@ func createOption(f *structure.Field, comment string) *cfgOption {
 		t.WriteI(" help:", "\"", strings.TrimSpace(comment[2:]), "\"")
 	}
 	t.WriteI(" placeholder:", "\"", strings.ToUpper(f.Name), "\"")
-	opt.Tag = t.String()
 	t.WriteString("`")
+	opt.Tag = t.String()
 	return opt
 }
