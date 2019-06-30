@@ -1,11 +1,5 @@
 package main
 
-var jsonHeader = `import (
-	"encoding/json"
-	"io/ioutil"
-)
-`
-
 var jsonLoader = `
 // New $STRUCT$ structure.
 func New() *$STRUCT$ {
