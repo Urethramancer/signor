@@ -18,6 +18,7 @@ import (
 	"github.com/Urethramancer/signor/log"
 )
 
+// Web server configuration and runtime data.
 type Web struct {
 	sync.RWMutex
 	sync.WaitGroup
@@ -27,17 +28,27 @@ type Web struct {
 	// Address to bind the web server to.
 	Address string `json:"address"`
 	// Port is optional, and will default to 80 or 443, depending on presence of certificates.
-	Port string `json:"port,omitempty"`
+	Port string `json:"port"`
 	// SitePath is the directory where site configurations are stored.
-	SitePath string `json:"sites,omitempty"`
+	SitePath string `json:"sites"`
 	// Secure servers prepare a default TLS configuration.
-	Secure bool `json:"secure,omitempty"`
+	Secure bool `json:"secure"`
+	// Timeouts for connections and shutdown.
+	Timeouts Timeouts `json:"timeouts"`
 
 	//
 	// Internals
 	//
 	sites   map[string]*Site
 	running bool
+}
+
+// Timeouts for web server.
+type Timeouts struct {
+	Idle     time.Duration `json:"idle"`
+	Read     time.Duration `json:"read"`
+	Write    time.Duration `json:"write"`
+	Shutdown time.Duration `json:"shutdown"`
 }
 
 // New creates a web server, configured with reasonable timeouts and a default handlers.
@@ -103,6 +114,10 @@ func NewFromFile(name string, logger *log.Logger) (*Web, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	w.IdleTimeout = nonZeroDuration(w.Timeouts.Idle, 30)
+	w.ReadTimeout = nonZeroDuration(w.Timeouts.Read, 10)
+	w.WriteTimeout = nonZeroDuration(w.Timeouts.Write, 10)
 
 	w.Init(logger)
 	return &w, nil
@@ -212,10 +227,10 @@ func (w *Web) Start() {
 }
 
 // Stop the webserver and try to wait until all connections are done.
-// Give up after half a second.
+// Give up after half a configured timeout.
 func (w *Web) Stop() error {
 	w.L("Stopping web server on %s:%s", w.Address, w.Port)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*500)
+	ctx, cancel := context.WithTimeout(context.Background(), w.Timeouts.Shutdown)
 	defer cancel()
 	err := w.Shutdown(ctx)
 	if err != nil {
