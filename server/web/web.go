@@ -45,9 +45,13 @@ type Web struct {
 
 // Timeouts for web server.
 type Timeouts struct {
-	Idle     time.Duration `json:"idle"`
-	Read     time.Duration `json:"read"`
-	Write    time.Duration `json:"write"`
+	// Idle timeout defaults to 30 seconds.
+	Idle time.Duration `json:"idle"`
+	// Read timeout defaults to 10 seconds.
+	Read time.Duration `json:"read"`
+	// Write timeout defaults to 10 seconds.
+	Write time.Duration `json:"write"`
+	// Shutdown timeout defaults to 3 seconds.
 	Shutdown time.Duration `json:"shutdown"`
 }
 
@@ -230,7 +234,7 @@ func (w *Web) Start() {
 // Give up after half a configured timeout.
 func (w *Web) Stop() error {
 	w.L("Stopping web server on %s:%s", w.Address, w.Port)
-	ctx, cancel := context.WithTimeout(context.Background(), w.Timeouts.Shutdown)
+	ctx, cancel := context.WithTimeout(context.Background(), nonZeroDuration(w.Timeouts.Shutdown, time.Second*30))
 	defer cancel()
 	err := w.Shutdown(ctx)
 	if err != nil {
