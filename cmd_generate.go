@@ -12,6 +12,7 @@ type GenerateCmd struct {
 	REST   RESTCmd      `command:"rest" help:"Generate REST code from tagged structures."`
 	DB     DBCmd        `command:"database" help:"Generate database schema from tagged structures." aliases:"db"`
 	Config CmdGenConfig `command:"config" aliases:"cfg" help:"Generate database schema from tagged structures."`
+	Tools  CmdGenTools  `command:"tools" help:"Generate tool command stubs."`
 }
 
 func (cmd *GenerateCmd) Run(in []string) error {
