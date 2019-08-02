@@ -1,24 +1,5 @@
 package structure
 
-func removeDuplicateStrings(list []string) []string {
-	var l []string
-
-	if len(list) == 0 {
-		return list
-	}
-
-	for i, s := range list {
-		if i == 0 {
-			l = append(l, s)
-			continue
-		}
-		if list[i-1] != s {
-			l = append(l, s)
-		}
-	}
-	return l
-}
-
 // protoType returns the protobuf equivalent for a Go type.
 // NOTE: Some assumptions are made. If you specify an int* type instead
 // of a uint, it's assumed you expect negative numbers, and the variable-

@@ -123,9 +123,9 @@ func (pkg *Package) addImport(i string) {
 
 func (pkg *Package) sortImports() {
 	sort.Strings(pkg.InternalImports)
-	pkg.InternalImports = removeDuplicateStrings(pkg.InternalImports)
+	pkg.InternalImports = stringer.RemoveDuplicateStrings(pkg.InternalImports)
 	sort.Strings(pkg.ExternalImports)
-	pkg.ExternalImports = removeDuplicateStrings(pkg.ExternalImports)
+	pkg.ExternalImports = stringer.RemoveDuplicateStrings(pkg.ExternalImports)
 }
 
 // parseType mainly looks for structures and their fields.
