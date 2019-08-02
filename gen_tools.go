@@ -9,15 +9,14 @@ import (
 	"strings"
 
 	"github.com/Urethramancer/signor/files"
-
-	"github.com/Urethramancer/signor/stringer"
-
 	"github.com/Urethramancer/signor/opt"
+	"github.com/Urethramancer/signor/stringer"
 )
 
 type CmdGenTools struct {
 	opt.DefaultHelp
 	Index    string   `short:"i" long:"index" help:"Generate 'index' top-level command to list the supplied commands."`
+	Main     string   `short:"m" long:"main" help:"Generate the option parser call code in its own file"`
 	Output   string   `short:"o" long:"output" help:"Directory to save output files in. Current directory will be used if not specified." placeholder:"DIR" default:"cmd"`
 	Package  string   `short:"p" long:"package" help:"Package name." placeholder:"NAME" default:"cmd"`
 	Commands []string `help:"Command to generate a stub for." placeholder:"COMMAND"`
