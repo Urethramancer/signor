@@ -84,7 +84,11 @@ func (cmd *CmdGenConfig) Run(in []string) error {
 				switch f.Value {
 				case "string", "float32", "float64", "int", "bool":
 					f.MakeTags(true, false)
-					opt := createOption(f, comment)
+					opt, err := createOption(f, comment)
+					if err != nil {
+						return err
+					}
+
 					list = append(list, opt)
 
 				default:
@@ -105,56 +109,84 @@ func (cmd *CmdGenConfig) Run(in []string) error {
 
 	pkg.InternalImports = append(pkg.InternalImports, "encoding/json")
 	pkg.InternalImports = append(pkg.InternalImports, "io/ioutil")
-	config.WriteStrings(
+	_, err = config.WriteStrings(
 		"// Package ", pkg.Name,
 		" loads and saves the ", stlist[0],
-		" structure.\n",
-		pkg.String(),
-		"\n",
-	)
+		" structure.\n")
+	if err != nil {
+		return err
+	}
+
+	s, err := pkg.String()
+	if err != nil {
+		return err
+	}
+
+	_, err = config.WriteStrings(s, "\n")
+	if err != nil {
+		return err
+	}
+
 	funcs := strings.ReplaceAll(jsonLoader, "$STRUCT$", stlist[0])
-	config.WriteString(funcs)
+	_, err = config.WriteString(funcs)
+	if err != nil {
+		return err
+	}
 
 	for _, st := range stlist {
-		commands.WriteStrings("type ", st, "GetCommands struct {\n")
-		commands.WriteStrings(
+		_, err = commands.WriteStrings(
+			"type ", st, "GetCommands struct {\n",
 			"\tGet", st,
 			"\tCmdGet", st,
 			"\t`",
 			"command:\"", strings.ToLower(st), "\"",
 			" help:\"Get configuration variables from ", st, ".", "\"",
-			"`", "\n",
-		)
-		commands.WriteString("}\n\n")
-
-		commands.WriteStrings("type ", st, "SetCommands struct {\n")
-		commands.WriteStrings(
+			"`", "\n", "}\n\n",
+			"type ", st, "SetCommands struct {\n",
 			"\tSet", st,
 			"\tCmdSet", st,
 			"\t`",
 			"command:\"", strings.ToLower(st), "\"",
 			" help:\"Set configuration variables from ", st, ".", "\"",
-			"`", "\n",
-		)
-		commands.WriteString("}\n\n")
-
-		commands.WriteStrings("// CmdGet", st, " options.\n")
-		commands.WriteStrings("type CmdGet", st, " struct {\n")
-		for _, opt := range stmap[st] {
-			commands.WriteStrings("\t", opt.Name, "\tGet", opt.Name, "\t", opt.Tag, "\n")
+			"`", "\n", "}\n\n",
+			"// CmdGet", st, " options.\n",
+			"type CmdGet", st, " struct {\n")
+		if err != nil {
+			return err
 		}
-		commands.WriteStrings("}\n\n")
 
-		commands.WriteStrings("// CmdSet", st, " options.\n")
-		commands.WriteStrings("type CmdSet", st, " struct {\n")
 		for _, opt := range stmap[st] {
-			commands.WriteStrings("\t", opt.Name, "\tSet", opt.Name, "\t", opt.Tag, "\n")
+			_, err = commands.WriteStrings("\t", opt.Name, "\tGet", opt.Name, "\t", opt.Tag, "\n")
+			if err != nil {
+				return err
+			}
 		}
-		commands.WriteStrings("}\n\n")
+
+		_, err = commands.WriteStrings("}\n\n",
+			"// CmdSet", st, " options.\n",
+			"type CmdSet", st, " struct {\n")
+		if err != nil {
+			return err
+		}
+
+		for _, opt := range stmap[st] {
+			_, err = commands.WriteStrings("\t", opt.Name, "\tSet", opt.Name, "\t", opt.Tag, "\n")
+			if err != nil {
+				return err
+			}
+		}
+		_, err = commands.WriteStrings("}\n\n")
+		if err != nil {
+			return err
+		}
 	}
 
 	path := filepath.Join(cmd.Output, cmd.Output+".go")
-	printHeader(path)
+	err = printHeader(path)
+	if err != nil {
+		return err
+	}
+
 	src, err = format.Source([]byte(config.String()))
 	if err != nil {
 		return err
@@ -162,7 +194,11 @@ func (cmd *CmdGenConfig) Run(in []string) error {
 	m("%s", src)
 
 	path = filepath.Join(cmd.Output, "commands.go")
-	printHeader(path)
+	err = printHeader(path)
+	if err != nil {
+		return err
+	}
+
 	src, err = format.Source([]byte(commands.String()))
 	if err != nil {
 		return err
@@ -170,7 +206,11 @@ func (cmd *CmdGenConfig) Run(in []string) error {
 	m("%s", src)
 
 	path = filepath.Join(cmd.Output, "handlers.go")
-	printHeader(path)
+	err = printHeader(path)
+	if err != nil {
+		return err
+	}
+
 	src, err = format.Source([]byte(handlers.String()))
 	if err != nil {
 		return err
@@ -179,30 +219,46 @@ func (cmd *CmdGenConfig) Run(in []string) error {
 	return nil
 }
 
-func printHeader(s string) {
+func printHeader(s string) error {
 	h := stringer.New()
-	h.WriteStrings(
+	_, err := h.WriteStrings(
 		strings.Repeat("*", len(s)+4),
 		"\n* ", s, " *\n",
 		strings.Repeat("*", len(s)+4),
 	)
+	if err != nil {
+		return err
+	}
+
 	log.Default.Msg("%s", h.String())
+	return nil
 }
 
-func createOption(f *structure.Field, comment string) *cfgOption {
+func createOption(f *structure.Field, comment string) (*cfgOption, error) {
 	opt := &cfgOption{
 		Type: f.Value,
 	}
 	t := stringer.New()
 	f.Name = strings.ToLower(f.Name)
-	t.WriteI("`command:\"", f.Name, "\"")
+	_, err := t.WriteI("`command:\"", f.Name, "\"")
+	if err != nil {
+		return nil, err
+	}
+
 	f.Name = strings.Title(f.Name)
 	opt.Name = f.Name
 	if comment != "" {
-		t.WriteI(" help:", "\"", strings.TrimSpace(comment[2:]), "\"")
+		_, err = t.WriteI(" help:", "\"", strings.TrimSpace(comment[2:]), "\"")
+		if err != nil {
+			return nil, err
+		}
 	}
-	t.WriteI(" placeholder:", "\"", strings.ToUpper(f.Name), "\"")
-	t.WriteString("`")
+
+	_, err = t.WriteI(" placeholder:", "\"", strings.ToUpper(f.Name), "\"", "`")
+	if err != nil {
+		return nil, err
+	}
+
 	opt.Tag = t.String()
-	return opt
+	return opt, nil
 }

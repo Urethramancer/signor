@@ -316,32 +316,56 @@ func (pkg *Package) MakeTags(json, omitempty bool) {
 	}
 }
 
-func (pkg *Package) String() string {
+func (pkg *Package) String() (string, error) {
 	b := stringer.New()
-	b.WriteStrings("package ", pkg.Name, "\n\n")
+	_, err := b.WriteStrings("package ", pkg.Name, "\n\n", "import (\n")
+	if err != nil {
+		return "", err
+	}
 
-	b.WriteString("import (\n")
 	if len(pkg.InternalImports) > 0 {
 		for _, inc := range pkg.InternalImports {
-			b.WriteI("\t", "\"", inc, "\"", "\n")
+			_, err := b.WriteI("\t", "\"", inc, "\"", "\n")
+			if err != nil {
+				return "", err
+			}
 		}
 	}
 
 	if len(pkg.ExternalImports) > 0 {
 		b.WriteString("\n")
 		for _, inc := range pkg.ExternalImports {
-			b.WriteStrings("\t", inc, "\n")
+			_, err := b.WriteStrings("\t", inc, "\n")
+			if err != nil {
+				return "", err
+			}
 		}
 	}
-	b.WriteString(")\n\n")
+	_, err = b.WriteString(")\n\n")
+	if err != nil {
+		return "", err
+	}
 
 	for _, st := range pkg.Structs {
-		b.WriteString(st.String())
-		b.WriteString("\n")
+		s, err := st.String()
+		if err != nil {
+			return "", err
+		}
+
+		_, err = b.WriteString(s)
+		if err != nil {
+			return "", err
+		}
+
+		_, err = b.WriteString("\n")
+		if err != nil {
+			return "", err
+		}
 	}
-	return b.String()
+	return b.String(), nil
 }
 
+// ProtoString generates protocol buffer output.
 func (pkg *Package) ProtoString() string {
 	var b strings.Builder
 	b.WriteString("syntax = ")

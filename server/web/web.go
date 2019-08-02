@@ -277,7 +277,10 @@ func (w *Web) LoadSites() error {
 		}
 
 		w.L("Web: Loaded %s", site.Domain)
-		w.AddSite(&site)
+		err = w.AddSite(&site)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

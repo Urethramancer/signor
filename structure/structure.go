@@ -2,6 +2,8 @@ package structure
 
 import (
 	"strings"
+
+	"github.com/Urethramancer/signor/stringer"
 )
 
 // Structure holds a struct and its preceding comment.
@@ -27,22 +29,33 @@ func (st *Structure) MakeTags(json, omitempty bool) {
 }
 
 // String representation of the struct and contents (somewhat pretty-printed).
-func (st *Structure) String() string {
-	var b strings.Builder
+func (st *Structure) String() (string, error) {
+	b := stringer.New()
 	if st.Comment != "" {
-		b.WriteString(st.Comment)
-		b.WriteString("\n")
+		_, err := b.WriteStrings(st.Comment, "\n")
+		if err != nil {
+			return "", err
+		}
 	}
-	b.WriteString("type ")
-	b.WriteString(st.Name)
-	b.WriteString(" struct {\n")
+	_, err := b.WriteStrings("type ", st.Name, " struct {\n")
+	if err != nil {
+		return "", err
+	}
+
 	for _, f := range st.Fields {
 		b.WriteString("\t")
-		b.WriteString(f.String())
-		b.WriteString("\n")
+		x, err := f.String()
+		if err != nil {
+			return "", err
+		}
+
+		_, err = b.WriteStrings(x, "\n")
+		if err != nil {
+			return "", err
+		}
 	}
 	b.WriteString("}\n")
-	return b.String()
+	return b.String(), nil
 }
 
 func (st *Structure) ProtoString() string {

@@ -31,13 +31,18 @@ func (cmd *DBCmd) Run(in []string) error {
 		return errors.New(opt.ErrorUsage)
 	}
 
-	pr := log.Default.Printf
+	m := log.Default.Msg
 	pkg, err := structure.NewPackage(cmd.Input)
 	if err != nil {
 		return err
 	}
 
 	pkg.Name = cmd.Package
-	pr("%s", pkg.String())
+	s, err := pkg.String()
+	if err != nil {
+		return err
+	}
+
+	m("%s", s)
 	return nil
 }

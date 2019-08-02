@@ -37,8 +37,16 @@ func (cmd *CmdGenTools) Run(in []string) error {
 	cmd.Commands = prepToolList(cmd.Commands)
 	out := stringer.New()
 	if cmd.Index != "" {
-		out.WriteStrings("package ", cmd.Package, "\n\n")
-		generateIndex(out, cmd.Index, cmd.Commands)
+		_, err = out.WriteStrings("package ", cmd.Package, "\n\n")
+		if err != nil {
+			return err
+		}
+
+		err = generateIndex(out, cmd.Index, cmd.Commands)
+		if err != nil {
+			return err
+		}
+
 		err = saveSource(out, cmd.Output, cmd.Index)
 		if err != nil {
 			return err
@@ -48,8 +56,16 @@ func (cmd *CmdGenTools) Run(in []string) error {
 	}
 
 	for _, x := range cmd.Commands {
-		out.WriteStrings("package ", cmd.Package, "\n\n")
-		generateToolCommand(out, x)
+		_, err = out.WriteStrings("package ", cmd.Package, "\n\n")
+		if err != nil {
+			return err
+		}
+
+		err = generateToolCommand(out, x)
+		if err != nil {
+			return err
+		}
+
 		err = saveSource(out, cmd.Output, x)
 		if err != nil {
 			return err
@@ -66,43 +82,57 @@ func saveSource(s *stringer.Stringer, dir, fn string) error {
 	return files.WriteFile(fn, []byte(s.String()))
 }
 
-func generateIndex(s *stringer.Stringer, name string, commands []string) {
-	s.WriteStrings(
-		"import (", "\n",
-		"\t\"errors\"", "\n\n",
-		"\t\"github.com/Urethramancer/signor/opt\"", "\n", ")\n\n",
-	)
-
+func generateIndex(s *stringer.Stringer, name string, commands []string) error {
 	name = strings.ToLower(name)
 	name = strings.Title(name)
-	s.WriteStrings("// Cmd", name, " subcommands.\n")
-	s.WriteStrings("type Cmd", name, " struct {\n", "\topt.DefaultHelp\n")
-	for _, x := range commands {
-		s.WriteStrings("\t", x, "\tCmd", x, "\t`command:\"", strings.ToLower(x), "\" help:\"<command help>\"`", "\n")
-	}
-	s.WriteString("}\n\n")
-	generateRun(s, name)
-}
-
-func generateRun(s *stringer.Stringer, name string) {
-	s.WriteStrings("// Run ", strings.ToLower(name), "\n")
-	s.WriteStrings("func (cmd *Cmd", name, ") Run(in []string) error {\n")
-	s.WriteString("\tif cmd.Help {\n")
-	s.WriteString("\t\treturn errors.New(opt.ErrorUsage)\n\t}\n\n")
-	s.WriteString("\treturn nil\n")
-	s.WriteString("}\n\n")
-}
-
-func generateToolCommand(s *stringer.Stringer, name string) {
-	s.WriteStrings(
+	_, err := s.WriteStrings(
 		"import (", "\n",
 		"\t\"errors\"", "\n\n",
 		"\t\"github.com/Urethramancer/signor/opt\"", "\n", ")\n\n",
-	)
+		"// Cmd", name, " subcommands.\n",
+		"type Cmd", name, " struct {\n", "\topt.DefaultHelp\n")
+	if err != nil {
+		return err
+	}
 
-	s.WriteStrings("// Cmd", name, " options.\n")
-	s.WriteStrings("type Cmd", name, " struct {\n", "\topt.DefaultHelp\n}\n\n")
-	generateRun(s, name)
+	for _, x := range commands {
+		_, err = s.WriteStrings("\t", x, "\tCmd", x, "\t`command:\"", strings.ToLower(x), "\" help:\"<command help>\"`", "\n")
+		if err != nil {
+			return err
+		}
+	}
+
+	_, err = s.WriteString("}\n\n")
+	if err != nil {
+		return err
+	}
+
+	return generateRun(s, name)
+}
+
+func generateRun(s *stringer.Stringer, name string) error {
+	_, err := s.WriteStrings(
+		"// Run ", strings.ToLower(name), "\n",
+		"func (cmd *Cmd", name, ") Run(in []string) error {\n",
+		"\tif cmd.Help {\n",
+		"\t\treturn errors.New(opt.ErrorUsage)\n\t}\n\n",
+		"\treturn nil\n",
+		"}\n\n")
+	return err
+}
+
+func generateToolCommand(s *stringer.Stringer, name string) error {
+	_, err := s.WriteStrings(
+		"import (", "\n",
+		"\t\"errors\"", "\n\n",
+		"\t\"github.com/Urethramancer/signor/opt\"", "\n", ")\n\n",
+		"// Cmd", name, " options.\n",
+		"type Cmd", name, " struct {\n", "\topt.DefaultHelp\n}\n\n")
+	if err != nil {
+		return err
+	}
+
+	return generateRun(s, name)
 }
 
 func prepToolList(a []string) []string {
