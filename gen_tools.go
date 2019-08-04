@@ -8,6 +8,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/mgutz/str"
+
 	"github.com/Urethramancer/signor/files"
 	"github.com/Urethramancer/signor/opt"
 	"github.com/Urethramancer/signor/stringer"
@@ -16,7 +18,7 @@ import (
 type CmdGenTools struct {
 	opt.DefaultHelp
 	Index    string   `short:"i" long:"index" help:"Generate 'index' top-level command to list the supplied commands." placeholder:"NAME"`
-	Main     string   `short:"m" long:"main" help:"Generate the option parser call code in its own file"`
+	Main     string   `short:"m" long:"main" help:"Generate the option parser call code in its own file" placeholder:"FILENAME"`
 	Output   string   `short:"o" long:"output" help:"Directory to save output files in. Current directory will be used if not specified." placeholder:"DIR" default:"cmd"`
 	Package  string   `short:"p" long:"package" help:"Package name." placeholder:"NAME" default:"cmd"`
 	Commands []string `help:"Command to generate a stub for. Aliases may be specified in the format 'command=alias1,alias2'." placeholder:"COMMAND"`
@@ -84,6 +86,28 @@ func (cmd *CmdGenTools) Run(in []string) error {
 
 		out.Reset()
 	}
+
+	if cmd.Main != "" {
+		_, err = out.WriteStrings("package ", cmd.Package, "\n\n")
+		if err != nil {
+			return err
+		}
+
+		name := strings.ToLower(cmd.Main)
+		name = str.ChompRight(name, ".go")
+		name = strings.Title(name)
+		err = generateMain(out, name)
+		if err != nil {
+			return err
+		}
+
+		name = filepath.Join(cmd.Output, cmd.Main)
+		err = files.WriteFile(name, []byte(out.String()))
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -166,3 +190,44 @@ func splitCommandAliases(command string) (string, string) {
 
 	return cmd, a[1]
 }
+
+func generateMain(s *stringer.Stringer, command string) error {
+	s.WriteStrings(
+		optHeaderTemplate,
+		"// Options holds all the tool commands.\n",
+		"var Options struct {\n",
+		"\topt.DefaultHelp\n",
+	)
+	s.WriteStrings(
+		"\t", command, "\tCmd", command,
+		"`command:\"", strings.ToLower(command), "\" help:\"", "<insert help here>\"`\n",
+	)
+	s.WriteStrings("}\n\n", optTemplate)
+	return nil
+}
+
+var optHeaderTemplate = `import (
+	"os"
+
+	"github.com/Urethramancer/signor/log"
+	"github.com/Urethramancer/signor/opt"
+)
+
+`
+
+var optTemplate = `// ParseOptions could be renamed to main(), or called from main.
+func ParseOptions() {
+	a := opt.Parse(&Options)
+	if Options.Help || len(os.Args) < 2 {
+		a.Usage()
+		return
+	}
+
+	var err error
+	err = a.RunCommand(false)
+	if err != nil {
+		log.Default.Msg("Error running: %s", err.Error())
+		os.Exit(2)
+	}
+}
+`
