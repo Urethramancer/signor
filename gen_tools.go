@@ -60,7 +60,7 @@ func (cmd *CmdGenTools) Run(in []string) error {
 			return err
 		}
 
-		err = saveSource(out, cmd.Output, "cmd_", cmd.Index)
+		err = saveSource(out, cmd.Output, "cmd", cmd.Index)
 		if err != nil {
 			return err
 		}
