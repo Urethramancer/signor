@@ -60,7 +60,7 @@ func (cmd *CmdGenTools) Run(in []string) error {
 			return err
 		}
 
-		err = saveSource(out, cmd.Output, cmd.Index)
+		err = saveSource(out, cmd.Output, "cmd_", cmd.Index)
 		if err != nil {
 			return err
 		}
@@ -74,12 +74,12 @@ func (cmd *CmdGenTools) Run(in []string) error {
 			return err
 		}
 
-		err = generateToolCommand(out, x)
+		err = generateToolCommand(out, cmd.Index, x)
 		if err != nil {
 			return err
 		}
 
-		err = saveSource(out, cmd.Output, x.Name)
+		err = saveSource(out, cmd.Output, cmd.Index, x.Name)
 		if err != nil {
 			return err
 		}
@@ -111,8 +111,12 @@ func (cmd *CmdGenTools) Run(in []string) error {
 	return nil
 }
 
-func saveSource(s *stringer.Stringer, dir, fn string) error {
-	fn = fmt.Sprintf("cmd_%s.go", strings.ToLower(fn))
+func saveSource(s *stringer.Stringer, dir, sub, fn string) error {
+	if sub == "" {
+		fn = fmt.Sprintf("cmd_%s.go", strings.ToLower(fn))
+	} else {
+		fn = fmt.Sprintf("%s_%s.go", sub, strings.ToLower(fn))
+	}
 	fn = filepath.Join(dir, fn)
 	return files.WriteFile(fn, []byte(s.String()))
 }
@@ -131,7 +135,7 @@ func generateIndex(s *stringer.Stringer, name string, commands []cmdList) error 
 	}
 
 	for _, x := range commands {
-		_, err = s.WriteStrings("\t", x.Name, "\tCmd", x.Name, "\t`command:\"", strings.ToLower(x.Name), "\" help:\"<command help>\"")
+		_, err = s.WriteStrings("\t", x.Name, "\tCmd", name, x.Name, "\t`command:\"", strings.ToLower(x.Name), "\" help:\"<command help>\"")
 		if err != nil {
 			return err
 		}
@@ -153,13 +157,15 @@ func generateIndex(s *stringer.Stringer, name string, commands []cmdList) error 
 		return err
 	}
 
-	return generateRun(s, name)
+	return generateRun(s, "", name)
 }
 
-func generateRun(s *stringer.Stringer, name string) error {
+func generateRun(s *stringer.Stringer, sub, name string) error {
+	sub = strings.ToLower(sub)
+	sub = strings.Title(sub)
 	_, err := s.WriteStrings(
 		"// Run ", strings.ToLower(name), "\n",
-		"func (cmd *Cmd", name, ") Run(in []string) error {\n",
+		"func (cmd *Cmd", sub, name, ") Run(in []string) error {\n",
 		"\tif cmd.Help {\n",
 		"\t\treturn errors.New(opt.ErrorUsage)\n\t}\n\n",
 		"\treturn nil\n",
@@ -167,18 +173,20 @@ func generateRun(s *stringer.Stringer, name string) error {
 	return err
 }
 
-func generateToolCommand(s *stringer.Stringer, cmd cmdList) error {
+func generateToolCommand(s *stringer.Stringer, sub string, cmd cmdList) error {
+	sub = strings.ToLower(sub)
+	sub = strings.Title(sub)
 	_, err := s.WriteStrings(
 		"import (", "\n",
 		"\t\"errors\"", "\n\n",
 		"\t\"github.com/Urethramancer/signor/opt\"", "\n", ")\n\n",
-		"// Cmd", cmd.Name, " options.\n",
-		"type Cmd", cmd.Name, " struct {\n", "\topt.DefaultHelp\n}\n\n")
+		"// Cmd", sub, cmd.Name, " options.\n",
+		"type Cmd", sub, cmd.Name, " struct {\n", "\topt.DefaultHelp\n}\n\n")
 	if err != nil {
 		return err
 	}
 
-	return generateRun(s, cmd.Name)
+	return generateRun(s, sub, cmd.Name)
 }
 
 func splitCommandAliases(command string) (string, string) {
