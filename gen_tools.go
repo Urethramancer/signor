@@ -163,6 +163,7 @@ func generateIndex(s *stringer.Stringer, name string, commands []cmdList) error 
 func generateRun(s *stringer.Stringer, sub, name string) error {
 	sub = strings.ToLower(sub)
 	sub = strings.Title(sub)
+	name = strings.Title(name)
 	_, err := s.WriteStrings(
 		"// Run ", strings.ToLower(name), "\n",
 		"func (cmd *Cmd", sub, name, ") Run(in []string) error {\n",
@@ -181,7 +182,7 @@ func generateToolCommand(s *stringer.Stringer, sub string, cmd cmdList) error {
 		"\t\"errors\"", "\n\n",
 		"\t\"github.com/Urethramancer/signor/opt\"", "\n", ")\n\n",
 		"// Cmd", sub, cmd.Name, " options.\n",
-		"type Cmd", sub, cmd.Name, " struct {\n", "\topt.DefaultHelp\n}\n\n")
+		"type Cmd", sub, strings.Title(cmd.Name), " struct {\n", "\topt.DefaultHelp\n}\n\n")
 	if err != nil {
 		return err
 	}
