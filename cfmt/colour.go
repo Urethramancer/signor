@@ -12,6 +12,15 @@ const (
 	Cyan    = "\x1b[36;1m"
 	White   = "\x1b[37;1m"
 
+	Grey         = "\x1b[90;1m"
+	LightRed     = "\x1b[91;1m"
+	LightGreen   = "\x1b[92;1m"
+	LightYellow  = "\x1b[93;1m"
+	LightBlue    = "\x1b[94;1m"
+	LightMagenta = "\x1b[95;1m"
+	LightCyan    = "\x1b[96;1m"
+	LightWhite   = "\x1b[97;1m"
+
 	// Background
 	BGBlack   = "\x1b[40;5m"
 	BGRed     = "\x1b[41;5m"
@@ -21,6 +30,15 @@ const (
 	BGMagenta = "\x1b[45;5m"
 	BGCyan    = "\x1b[46;5m"
 	BGWhite   = "\x1b[47;5m"
+
+	BGGrey         = "\x1b[100;5m"
+	BGLightRed     = "\x1b[101;5m"
+	BGLightGreen   = "\x1b[102;5m"
+	BGLightYellow  = "\x1b[103;5m"
+	BGLightBlue    = "\x1b[104;5m"
+	BGLightMagenta = "\x1b[105;5m"
+	BGLightCyan    = "\x1b[106;5m"
+	BGLightWhite   = "\x1b[107;5m"
 
 	// Other options
 	Bold          = "\x1b[1;1m"

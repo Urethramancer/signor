@@ -50,6 +50,23 @@ func colour(dst io.Writer, f string) {
 			case "white":
 				dst.Write([]byte(White))
 
+			case "grey":
+				dst.Write([]byte(Grey))
+			case "lred":
+				dst.Write([]byte(LightRed))
+			case "lgreen":
+				dst.Write([]byte(LightGreen))
+			case "lyellow":
+				dst.Write([]byte(LightYellow))
+			case "lblue":
+				dst.Write([]byte(LightBlue))
+			case "lmagenta":
+				dst.Write([]byte(LightMagenta))
+			case "lcyan":
+				dst.Write([]byte(LightCyan))
+			case "lwhite":
+				dst.Write([]byte(LightWhite))
+
 			// Background colour
 			case "bgblack":
 				dst.Write([]byte(BGBlack))
@@ -67,6 +84,23 @@ func colour(dst io.Writer, f string) {
 				dst.Write([]byte(BGCyan))
 			case "bgwhite":
 				dst.Write([]byte(BGWhite))
+
+			case "bggrey":
+				dst.Write([]byte(BGGrey))
+			case "bglred":
+				dst.Write([]byte(BGLightRed))
+			case "bglgreen":
+				dst.Write([]byte(BGLightGreen))
+			case "bglyellow":
+				dst.Write([]byte(BGLightYellow))
+			case "bglblue":
+				dst.Write([]byte(BGLightBlue))
+			case "bglmagenta":
+				dst.Write([]byte(BGLightMagenta))
+			case "bglcyan":
+				dst.Write([]byte(BGLightCyan))
+			case "bglwhite":
+				dst.Write([]byte(BGLightWhite))
 
 			// Other styling
 			case "bold":
