@@ -97,6 +97,8 @@ func (s *Stringer) writeX(x interface{}) (int, error) {
 		c, err = s.WriteString(x.(string))
 	case reflect.Int:
 		c, err = s.WriteString(strconv.FormatInt(int64(x.(int)), 10))
+	case reflect.Int64:
+		c, err = s.WriteString(strconv.FormatInt(x.(int64), 10))
 	case reflect.Float64:
 		c, err = s.WriteString(strconv.FormatFloat(x.(float64), 'f', -1, 64))
 	case reflect.Slice:
