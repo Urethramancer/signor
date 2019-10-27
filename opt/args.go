@@ -188,7 +188,7 @@ func (a *Args) parseField(sf reflect.StructField) {
 		f.Choices = strings.Split(c, ",")
 	}
 	for i, c := range f.Choices {
-		f.Choices[i] = strings.TrimSpace(c)
+		f.Choices[i] = strings.ToLower(strings.TrimSpace(c))
 	}
 
 	// Get boolean options
@@ -350,4 +350,19 @@ func (a *Args) parseArg(args []string, f *Flag) []string {
 
 	f.setValue(args[0])
 	return args[1:]
+}
+
+// SetChoicesShort sets the selectable options based on the short option name.
+func (a *Args) SetChoicesShort(name string, list []string) {
+	sh, ok := a.short[name]
+	if !ok {
+		return
+	}
+
+	sh.Choices = list
+}
+
+// SetChoicesLong sets the selectable options based on the long option name.
+func (a *Args) SetChoicesLong(name string, list []string) {
+	a.long[name].Choices = list
 }

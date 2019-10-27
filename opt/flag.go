@@ -23,6 +23,7 @@ type Flag struct {
 	Aliases     []string
 	Args        *Args
 	command     reflect.Value
+	filter      reflect.Value
 	err         error
 	IsCommand   bool
 	IsSlice     bool
@@ -183,6 +184,7 @@ func (f *Flag) parseCommand(args []string, parent string) {
 	p.WriteStrings(parent, " ", f.CommandName)
 	f.Args.Parse(iface.Interface(), args, p.String())
 	f.command = iface.MethodByName("Run")
+	f.filter = iface.MethodByName("Filter")
 }
 
 // executeCommand specified on command line. Returns the next command, if any, or an error.
@@ -192,7 +194,11 @@ func (f *Flag) executeCommand(all bool) error {
 		return f.Args.RunCommand(all)
 	}
 
-	if f.command.Kind() == reflect.Func {
+	if f.filter.IsValid() {
+		f.filter.Call([]reflect.Value{reflect.ValueOf(f.Args)})
+	}
+
+	if f.command.IsValid() && f.command.Kind() == reflect.Func {
 		ret := f.command.Call([]reflect.Value{reflect.ValueOf(f.Args.Remaining)})
 		err := ret[0].Interface()
 		if err != nil {
@@ -206,4 +212,14 @@ func (f *Flag) executeCommand(all bool) error {
 	}
 
 	return nil
+}
+
+// AddChoice to list. Makes the choice lowercase and trims leading and trailing spaces.
+func (f *Flag) AddChoice(c string) {
+	f.Choices = append(f.Choices, strings.ToLower(strings.TrimSpace(c)))
+}
+
+// SetChoices to a new list.
+func (f *Flag) SetChoices(list []string) {
+	f.Choices = list
 }
