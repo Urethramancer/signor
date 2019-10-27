@@ -31,38 +31,25 @@ func (cmd *TravisCmd) Run(in []string) error {
 	}
 
 	yml := stringer.New()
-	_, err = yml.WriteStrings("language: go\n\ngo:\n  - ", ver, "\n")
-	if err != nil {
-		return err
-	}
+	yml.WriteStrings("language: go\n\ngo:\n  - ", ver, "\n")
 
 	pkg, err := structure.NewPackage(cmd.Input...)
 	if err != nil {
 		return err
 	}
 
-	_, err = yml.WriteStrings("\ninstall:\n")
-	if err != nil {
-		return err
-	}
-
+	yml.WriteStrings("\ninstall:\n")
 	for _, imp := range pkg.MergeExternalImports() {
 		imp = strings.ReplaceAll(imp, "\"", "")
-		_, err = yml.WriteStrings("    - go get ", imp, "\n")
-		if err != nil {
-			return err
-		}
+		yml.WriteStrings("    - go get ", imp, "\n")
 	}
 
-	_, err = yml.WriteI("\ninclude:\n  - os: linux\n",
+	yml.WriteI("\ninclude:\n  - os: linux\n",
 		"    go: ", '"', ver, ".x", '"', "\n",
 		"    cache:\n      directories:\n",
 		"        - $HOME/.cache/go-build\n",
 		"        - $HOME/gopath/pkg/mod\n",
 	)
-	if err != nil {
-		return err
-	}
 
 	if cmd.Name == "" {
 		log.Default.Msg(yml.String())
