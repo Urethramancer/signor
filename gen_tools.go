@@ -45,7 +45,7 @@ func (cmd *CmdGenTools) Run(in []string) error {
 	var commands []cmdList
 	for _, x := range cmd.Commands {
 		c, l := splitCommandAliases(x)
-		cl := cmdList{c, l}
+		cl := cmdList{c, strings.ToLower(l)}
 		commands = append(commands, cl)
 	}
 
