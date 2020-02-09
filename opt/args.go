@@ -329,7 +329,7 @@ func isValidChoice(s string, choices []string) bool {
 }
 
 func (a *Args) parseArg(args []string, f *Flag) []string {
-	if len(f.Choices) > 0 && !isValidChoice(args[1], f.Choices) {
+	if len(f.Choices) > 0 && len(args) > 1 && !isValidChoice(args[1], f.Choices) {
 		def := f.Choices[0]
 		if f.Default != "" {
 			def = f.Default
