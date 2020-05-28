@@ -292,6 +292,12 @@ func (a *Args) parseLong(args []string) []string {
 	if !ok {
 		return args
 	}
+
+	if f.field.Kind() == reflect.Bool {
+		f.setBool(true)
+		return args
+	}
+
 	return a.parseArg(args, f)
 }
 
