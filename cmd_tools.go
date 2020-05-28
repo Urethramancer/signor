@@ -8,14 +8,14 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/mgutz/str"
-
 	"github.com/Urethramancer/signor/files"
 	"github.com/Urethramancer/signor/opt"
 	"github.com/Urethramancer/signor/stringer"
+	"github.com/mgutz/str"
 )
 
-type CmdGenTools struct {
+// CmdTools generates tool command structures.
+type CmdTools struct {
 	opt.DefaultHelp
 	Index    string   `short:"i" long:"index" help:"Generate 'index' top-level command to list the supplied commands." placeholder:"NAME"`
 	Main     string   `short:"m" long:"main" help:"Generate the option parser call code in its own file" placeholder:"FILENAME"`
@@ -29,7 +29,7 @@ type cmdList struct {
 	Aliases string
 }
 
-func (cmd *CmdGenTools) Run(in []string) error {
+func (cmd *CmdTools) Run(in []string) error {
 	if cmd.Help || len(cmd.Commands) == 0 {
 		return errors.New(opt.ErrorUsage)
 	}

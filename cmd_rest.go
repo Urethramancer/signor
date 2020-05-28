@@ -6,8 +6,8 @@ import (
 	"github.com/Urethramancer/signor/opt"
 )
 
-// RESTCmd generator struct.
-type RESTCmd struct {
+// CmdREST generator struct.
+type CmdREST struct {
 	// Help flag.
 	Help bool `short:"h" long:"help" help:"Show usage."`
 
@@ -18,7 +18,7 @@ type RESTCmd struct {
 }
 
 // Run the REST code generator.
-func (cmd *RESTCmd) Run(in []string) error {
+func (cmd *CmdREST) Run(in []string) error {
 	if cmd.Help || cmd.Output == "" {
 		return errors.New(opt.ErrorUsage)
 	}

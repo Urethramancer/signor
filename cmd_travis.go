@@ -13,13 +13,15 @@ import (
 	"github.com/Urethramancer/signor/structure"
 )
 
-type TravisCmd struct {
+// CmdTravis generatis TravisCI YAML files.
+type CmdTravis struct {
 	opt.DefaultHelp
 	Name  string   `short:"o" long:"output" help:"Filename to save the YAML file as." placeholder:"FILE"`
 	Input []string `help:"Input Go source file to read imports from." placeholder:"SOURCE"`
 }
 
-func (cmd *TravisCmd) Run(in []string) error {
+// Run Travis generation.
+func (cmd *CmdTravis) Run(in []string) error {
 	if cmd.Help || len(cmd.Input) == 0 {
 		return errors.New(opt.ErrorUsage)
 	}

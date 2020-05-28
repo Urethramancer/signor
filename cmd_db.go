@@ -8,7 +8,8 @@ import (
 	"github.com/Urethramancer/signor/structure"
 )
 
-type DBCmd struct {
+// CmdDB generates database access functions.
+type CmdDB struct {
 	// Help flag.
 	Help bool `short:"h" long:"help" help:"Show usage."`
 
@@ -26,7 +27,7 @@ type DBCmd struct {
 }
 
 // Run the DB code generator.
-func (cmd *DBCmd) Run(in []string) error {
+func (cmd *CmdDB) Run(in []string) error {
 	if cmd.Help || cmd.Output == "" {
 		return errors.New(opt.ErrorUsage)
 	}

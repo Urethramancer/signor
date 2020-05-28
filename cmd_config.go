@@ -13,8 +13,8 @@ import (
 	"github.com/Urethramancer/signor/structure"
 )
 
-// CmdGenConfig generates configuration file loading, saving and tool commands.
-type CmdGenConfig struct {
+// CmdConfig generates configuration file loading, saving and tool commands.
+type CmdConfig struct {
 	opt.DefaultHelp
 	Input  string `help:"Input Go source file to generate config handler from. Only the first structure and those embedded in it will be considered." placeholder:"SOURCE"`
 	Output string `help:"Output path." placeholder:"PATH" default:"config"`
@@ -49,7 +49,7 @@ type cfgOption struct {
 	Tag  string
 }
 
-func (cmd *CmdGenConfig) Run(in []string) error {
+func (cmd *CmdConfig) Run(in []string) error {
 	if cmd.Help || cmd.Input == "" || cmd.Output == "" {
 		return errors.New(opt.ErrorUsage)
 	}
