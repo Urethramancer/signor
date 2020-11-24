@@ -346,7 +346,11 @@ func (a *Args) parseArg(args []string, f *Flag) []string {
 		case reflect.String:
 			f.setString(def)
 		}
-		return args[1:]
+		if len(args) < 2 {
+			return nil
+		} else {
+			return args[1:]
+		}
 	}
 
 	if f.field.Kind() == reflect.Bool {
