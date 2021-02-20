@@ -154,11 +154,11 @@ func boolValue(s string) bool {
 	return false
 }
 
-// GetBool returns a field as a bool.
-func (s *INISection) GetBool(key string) bool {
+// GetBool returns a field as a bool, or the alternative.
+func (s *INISection) GetBool(key string, alt bool) bool {
 	v, ok := s.Fields[key]
 	if !ok {
-		return false
+		return alt
 	}
 
 	return v.boolV
@@ -172,11 +172,11 @@ func (s *INISection) AddBool(key string, value bool) {
 	s.Order = append(s.Order, key)
 }
 
-// GetInt returns a field as an int.
-func (s *INISection) GetInt(key string) int {
+// GetInt returns a field as an int, or the alternative.
+func (s *INISection) GetInt(key string, alt int) int {
 	v, ok := s.Fields[key]
 	if !ok {
-		return 0
+		return alt
 	}
 
 	return v.intV
@@ -190,11 +190,11 @@ func (s *INISection) AddInt(key string, value int) {
 	s.Order = append(s.Order, key)
 }
 
-// GetFloat returns a field as a float64.
-func (s *INISection) GetFloat(key string) float64 {
+// GetFloat returns a field as a float64, or the alternative.
+func (s *INISection) GetFloat(key string, alt float64) float64 {
 	v, ok := s.Fields[key]
 	if !ok {
-		return 0.0
+		return alt
 	}
 
 	return v.floatV
@@ -208,11 +208,11 @@ func (s *INISection) AddFloat(key string, value float64) {
 	s.Order = append(s.Order, key)
 }
 
-// GetString returns a field as a string.
-func (s *INISection) GetString(key string) string {
+// GetString returns a field as a string, or the alternative.
+func (s *INISection) GetString(key, alt string) string {
 	v, ok := s.Fields[key]
 	if !ok {
-		return ""
+		return alt
 	}
 
 	return v.Value
