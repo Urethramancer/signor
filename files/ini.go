@@ -2,7 +2,6 @@ package files
 
 import (
 	"bufio"
-	"fmt"
 	"os"
 	"strings"
 
@@ -17,31 +16,18 @@ type INI struct {
 	Order []string
 }
 
-// INISection holds one or more fields.
-type INISection struct {
-	Fields map[string]*INIField
-	// Order fields were loaded or added in.
-	Order []string
-}
-
-// INIField is a variable and its data.
-type INIField struct {
-	// Value will be stripped of surrounding whitespace when loaded.
-	Value string
-	// Type lets the user choose which Get* method to use when loading unknown files.
-	Type   byte
-	boolV  bool
-	intV   int
-	floatV float64
-}
-
 const (
+	// INIBool type
 	INIBool = iota
+	// INIInt type
 	INIInt
+	// INIFloat type
 	INIFloat
+	// INIString type
 	INIString
 )
 
+// NewINI returns an empty INI structure.
 func NewINI() *INI {
 	return &INI{
 		Sections: make(map[string]*INISection),
@@ -77,7 +63,7 @@ func LoadINI(filename string) (*INI, error) {
 	return ini, err
 }
 
-// Saveoutputs the INI to a file.
+// Save outputs the INI to a file.
 // If tabbed is true, the fields will be saved with a tab character prepended.
 func (ini *INI) Save(filename string, tabbed bool) error {
 	b := stringer.New()
@@ -100,6 +86,7 @@ func (ini *INI) Save(filename string, tabbed bool) error {
 	return WriteFile(filename, []byte(b.String()))
 }
 
+// AddSection to INI structure.
 func (ini *INI) AddSection(name string) *INISection {
 	sec := &INISection{
 		Fields: make(map[string]*INIField),
@@ -167,6 +154,16 @@ func boolValue(s string) bool {
 	return false
 }
 
+// GetBool returns a field as a bool.
+func (s *INISection) GetBool(key string) bool {
+	v, ok := s.Fields[key]
+	if !ok {
+		return false
+	}
+
+	return v.boolV
+}
+
 // AddBool adds a new bool field to the section.
 func (s *INISection) AddBool(key string, value bool) {
 	f := INIField{}
@@ -175,7 +172,17 @@ func (s *INISection) AddBool(key string, value bool) {
 	s.Order = append(s.Order, key)
 }
 
-// AddBool adds a new int field to the section.
+// GetInt returns a field as an int.
+func (s *INISection) GetInt(key string) int {
+	v, ok := s.Fields[key]
+	if !ok {
+		return 0
+	}
+
+	return v.intV
+}
+
+// AddInt adds a new int field to the section.
 func (s *INISection) AddInt(key string, value int) {
 	f := INIField{}
 	f.SetInt(key, value)
@@ -183,7 +190,17 @@ func (s *INISection) AddInt(key string, value int) {
 	s.Order = append(s.Order, key)
 }
 
-// AddBool adds a new float64 field to the section.
+// GetFloat returns a field as a float64.
+func (s *INISection) GetFloat(key string) float64 {
+	v, ok := s.Fields[key]
+	if !ok {
+		return 0.0
+	}
+
+	return v.floatV
+}
+
+// AddFloat adds a new float64 field to the section.
 func (s *INISection) AddFloat(key string, value float64) {
 	f := INIField{}
 	f.SetFloat(key, value)
@@ -191,52 +208,20 @@ func (s *INISection) AddFloat(key string, value float64) {
 	s.Order = append(s.Order, key)
 }
 
-// AddBool adds a new string field to the section.
+// GetString returns a field as a string.
+func (s *INISection) GetString(key string) string {
+	v, ok := s.Fields[key]
+	if !ok {
+		return ""
+	}
+
+	return v.Value
+}
+
+// AddString adds a new string field to the section.
 func (s *INISection) AddString(key string, value string) {
 	f := INIField{}
 	f.SetString(key, value)
 	s.Fields[key] = &f
 	s.Order = append(s.Order, key)
-}
-
-// GetBool returns the field as a bool.
-func (f *INIField) GetBool(key string) bool {
-	return f.boolV
-}
-
-// SetBool sets the field as a bool.
-func (f *INIField) SetBool(key string, value bool) {
-	f.boolV = value
-	f.Type = INIBool
-	f.Value = fmt.Sprintf("%t", value)
-}
-
-// GetInt returns the field as an int.
-func (f *INIField) GetInt(key string) int {
-	return f.intV
-}
-
-// SetInt sets the field as an int.
-func (f *INIField) SetInt(key string, value int) {
-	f.intV = value
-	f.Type = INIInt
-	f.Value = fmt.Sprintf("%d", value)
-}
-
-// GetFloat returns the field as a float64.
-func (f *INIField) GetFloat(key string) float64 {
-	return f.floatV
-}
-
-// SetFloat sets the field as a float64.
-func (f *INIField) SetFloat(key string, value float64) {
-	f.floatV = value
-	f.Type = INIFloat
-	f.Value = fmt.Sprintf("%f", value)
-}
-
-// SetString sets the field as a string.
-func (f *INIField) SetString(key, value string) {
-	f.Value = value
-	f.Type = INIString
 }
