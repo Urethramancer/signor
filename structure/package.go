@@ -129,36 +129,23 @@ func (pkg *Package) sortImports() {
 	pkg.ExternalImports = stringer.RemoveDuplicateStrings(pkg.ExternalImports)
 }
 
-func (pkg *Package) String() (string, error) {
+func (pkg *Package) String() string {
 	b := stringer.New()
-	_, err := b.WriteStrings("package ", pkg.Name, "\n\n", "import (\n")
-	if err != nil {
-		return "", err
-	}
-
+	b.WriteStrings("package ", pkg.Name, "\n\n", "import (\n")
 	if len(pkg.InternalImports) > 0 {
 		for _, inc := range pkg.InternalImports {
-			_, err := b.WriteI("\t", "\"", inc, "\"", "\n")
-			if err != nil {
-				return "", err
-			}
+			b.WriteI("\t", "\"", inc, "\"", "\n")
 		}
 	}
 
 	if len(pkg.ExternalImports) > 0 {
 		b.WriteString("\n")
 		for _, inc := range pkg.ExternalImports {
-			_, err := b.WriteStrings("\t", inc, "\n")
-			if err != nil {
-				return "", err
-			}
+			b.WriteStrings("\t", inc, "\n")
 		}
 	}
-	_, err = b.WriteString(")\n\n")
-	if err != nil {
-		return "", err
-	}
 
+	b.WriteString(")\n\n")
 	for _, st := range pkg.Structs {
 		b.WriteString(st.String())
 		b.WriteString("\n")
@@ -168,7 +155,7 @@ func (pkg *Package) String() (string, error) {
 		b.WriteStrings(f, "\n")
 	}
 
-	return b.String(), nil
+	return b.String()
 }
 
 // ProtoString generates protocol buffer output.
