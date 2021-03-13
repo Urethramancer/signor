@@ -99,33 +99,19 @@ func (st *Structure) MakeTags(json, omitempty bool) {
 }
 
 // String representation of the struct and contents (somewhat pretty-printed).
-func (st *Structure) String() (string, error) {
+func (st *Structure) String() string {
 	b := stringer.New()
 	if st.Comment != "" {
-		_, err := b.WriteStrings(st.Comment, "\n")
-		if err != nil {
-			return "", err
-		}
+		b.WriteStrings(st.Comment, "\n")
 	}
-	_, err := b.WriteStrings("type ", st.Name, " struct {\n")
-	if err != nil {
-		return "", err
-	}
+	b.WriteStrings("type ", st.Name, " struct {\n")
 
 	for _, f := range st.Fields {
 		b.WriteString("\t")
-		x, err := f.String()
-		if err != nil {
-			return "", err
-		}
-
-		_, err = b.WriteStrings(x, "\n")
-		if err != nil {
-			return "", err
-		}
+		b.WriteStrings(f.String(), "\n")
 	}
 	b.WriteString("}\n")
-	return b.String(), nil
+	return b.String()
 }
 
 // ProtoString is a protobuf representation of the structure.

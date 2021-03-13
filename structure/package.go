@@ -160,20 +160,8 @@ func (pkg *Package) String() (string, error) {
 	}
 
 	for _, st := range pkg.Structs {
-		s, err := st.String()
-		if err != nil {
-			return "", err
-		}
-
-		_, err = b.WriteString(s)
-		if err != nil {
-			return "", err
-		}
-
-		_, err = b.WriteString("\n")
-		if err != nil {
-			return "", err
-		}
+		b.WriteString(st.String())
+		b.WriteString("\n")
 	}
 
 	for _, f := range pkg.Funcs {

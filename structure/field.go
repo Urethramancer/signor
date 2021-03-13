@@ -85,19 +85,15 @@ func (f *Field) MakeTags(json, omitempty bool) {
 }
 
 // String representation of the field (compact; one tab as separator).
-func (f *Field) String() (string, error) {
+func (f *Field) String() string {
 	var b stringer.Stringer
 
 	if f.Name == "" {
 		b.WriteString(f.Value)
-		return b.String(), nil
+		return b.String()
 	}
 
-	_, err := b.WriteStrings(f.Name, "\t")
-	if err != nil {
-		return "", err
-	}
-
+	b.WriteStrings(f.Name, "\t")
 	if f.IsPointer {
 		b.WriteString("*")
 	}
@@ -107,50 +103,29 @@ func (f *Field) String() (string, error) {
 		if f.IsPointerValue {
 			b.WriteString("*")
 		}
+
 		b.WriteString(f.Value)
 	} else if f.IsMap {
-		_, err = b.WriteStrings("map[", f.Key, "]")
-		if err != nil {
-			return "", err
-		}
-
+		b.WriteStrings("map[", f.Key, "]")
 		if f.IsPointerValue {
-			_, err = b.WriteString("*")
-			if err != nil {
-				return "", err
-			}
+			b.WriteString("*")
 		}
 
-		_, err = b.WriteString(f.Value)
-		if err != nil {
-			return "", err
-		}
+		b.WriteString(f.Value)
 	} else {
-		_, err = b.WriteString(f.Value)
-		if err != nil {
-			return "", err
-		}
+		b.WriteString(f.Value)
 	}
 
 	if f.Tags.JSON.Name != "" {
-		_, err = b.WriteStrings("\t", "`json:\"", f.Tags.JSON.Name)
-		if err != nil {
-			return "", err
+		b.WriteStrings("\t", "`json:\"", f.Tags.JSON.Name)
+		if f.Tags.JSON.Omitempty {
+			b.WriteString(",omitempty")
 		}
 
-		if f.Tags.JSON.Omitempty {
-			_, err = b.WriteString(",omitempty")
-			if err != nil {
-				return "", err
-			}
-		}
-		_, err = b.WriteString("\"`")
-		if err != nil {
-			return "", err
-		}
+		b.WriteString("\"`")
 	}
 
-	return b.String(), nil
+	return b.String()
 }
 
 // ProtoString is a protocol buffers representation of the field.
