@@ -23,7 +23,7 @@ type Package struct {
 	ExternalImports []string
 
 	Structs []*Structure
-	Funcs   []string
+	Funcs   []Func
 }
 
 func NewPackage(filenames ...string) (*Package, error) {
@@ -152,7 +152,7 @@ func (pkg *Package) String() string {
 	}
 
 	for _, f := range pkg.Funcs {
-		b.WriteStrings(f, "\n")
+		b.WriteStrings(f.Code, "\n")
 	}
 
 	return b.String()

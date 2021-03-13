@@ -7,10 +7,25 @@ import (
 	"github.com/Urethramancer/signor/stringer"
 )
 
+// Funcs holds the code for a function.
+type Func struct {
+	// Name of the func for lookup.
+	Name string
+	// Code is the entire function.
+	Code string
+}
+
 // parseFunc parses and stores functions.
 func (pkg *Package) parseFunc() {
 	b := stringer.New()
 	b.WriteString("func ")
+	this := Func{}
+	pkg.tok = pkg.Scan()
+	if pkg.tok == scanner.EOF {
+		return
+	}
+
+	this.Name = pkg.TokenText()
 	braces := 1
 	nl := false
 	for pkg.tok = pkg.Scan(); pkg.tok != scanner.EOF && braces > 0; pkg.tok = pkg.Scan() {
@@ -48,5 +63,6 @@ func (pkg *Package) parseFunc() {
 
 	}
 
-	pkg.Funcs = append(pkg.Funcs, b.String())
+	this.Code = b.String()
+	pkg.Funcs = append(pkg.Funcs, this)
 }
