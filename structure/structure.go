@@ -2,6 +2,7 @@ package structure
 
 import (
 	"strings"
+	"text/scanner"
 
 	"github.com/Urethramancer/signor/stringer"
 )
@@ -11,6 +12,75 @@ type Structure struct {
 	Name    string
 	Comment string
 	Fields  []*Field
+}
+
+// parseType mainly looks for structures and their fields.
+func (pkg *Package) parseType(comment string) {
+	pkg.tok = pkg.Scan()
+	if pkg.tok == scanner.EOF {
+		return
+	}
+
+	name := pkg.TokenText()
+	if name == "(" {
+		pkg.parseTypes()
+		return
+	}
+
+	pkg.tok = pkg.Scan()
+	// If we drop out at this point, the type is incomplete.
+	if pkg.tok == scanner.EOF {
+		return
+	}
+
+	if pkg.TokenText() == "interface" {
+		pkg.skipInterface()
+		return
+	}
+
+	if pkg.TokenText() == "struct" {
+		st := NewStructure(name, comment)
+		pkg.Structs = append(pkg.Structs, st)
+		pkg.parseFields(st)
+	}
+}
+
+// parseTypes is used to parse multiple types in parentheses.
+// TODO: Actually parse these rather than skipping.
+func (pkg *Package) parseTypes() {
+	parens := 1
+	for pkg.tok = pkg.Scan(); pkg.tok != scanner.EOF && parens > 0; pkg.tok = pkg.Scan() {
+		switch pkg.TokenText() {
+		case "(":
+			parens++
+
+		case ")":
+			parens--
+		}
+	}
+}
+
+// skipInterface parses past the end of an interface.
+func (pkg *Package) skipInterface() {
+	for pkg.tok = pkg.Scan(); pkg.tok != scanner.EOF && pkg.TokenText() != "{"; pkg.tok = pkg.Scan() {
+	}
+	braces := 1
+	for pkg.tok = pkg.Scan(); pkg.tok != scanner.EOF && braces > 0; pkg.tok = pkg.Scan() {
+		switch pkg.TokenText() {
+		case "{":
+			braces++
+
+		case "}":
+			braces--
+		}
+	}
+}
+
+// MakeTags for all structures. Unexported fields will be skipped.
+func (pkg *Package) MakeTags(json, omitempty bool) {
+	for _, st := range pkg.Structs {
+		st.MakeTags(json, omitempty)
+	}
 }
 
 // NewStructure simply returns a Structure struct with the specified name.
@@ -58,6 +128,7 @@ func (st *Structure) String() (string, error) {
 	return b.String(), nil
 }
 
+// ProtoString is a protobuf representation of the structure.
 func (st *Structure) ProtoString() string {
 	var b strings.Builder
 	if st.Comment != "" {

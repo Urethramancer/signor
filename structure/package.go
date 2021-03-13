@@ -1,7 +1,7 @@
 package structure
 
 import (
-	"io/ioutil"
+	"os"
 	"sort"
 	"strings"
 	"text/scanner"
@@ -23,6 +23,7 @@ type Package struct {
 	ExternalImports []string
 
 	Structs []*Structure
+	Funcs   []string
 }
 
 func NewPackage(filenames ...string) (*Package, error) {
@@ -32,7 +33,7 @@ func NewPackage(filenames ...string) (*Package, error) {
 
 	for _, fn := range filenames {
 		var err error
-		src, err := ioutil.ReadFile(fn)
+		src, err := os.ReadFile(fn)
 		if err != nil {
 			return nil, err
 		}
@@ -44,12 +45,12 @@ func NewPackage(filenames ...string) (*Package, error) {
 	pkg.Filename = filenames[0]
 	pkg.Whitespace ^= 1 << '\n'
 	pkg.Mode ^= scanner.SkipComments
-	pkg.parse()
+	pkg.Parse()
 	return pkg, nil
 }
 
 // parse scans the file for structures
-func (pkg *Package) parse() {
+func (pkg *Package) Parse() {
 	var comment string
 	for pkg.tok = pkg.Scan(); pkg.tok != scanner.EOF; pkg.tok = pkg.Scan() {
 		if pkg.tok == scanner.Comment {
@@ -71,7 +72,7 @@ func (pkg *Package) parse() {
 			comment = ""
 
 		case "func":
-			pkg.skipFunc()
+			pkg.parseFunc()
 			comment = ""
 
 		case "\n":
@@ -128,194 +129,6 @@ func (pkg *Package) sortImports() {
 	pkg.ExternalImports = stringer.RemoveDuplicateStrings(pkg.ExternalImports)
 }
 
-// parseType mainly looks for structures and their fields.
-func (pkg *Package) parseType(comment string) {
-	pkg.tok = pkg.Scan()
-	if pkg.tok == scanner.EOF {
-		return
-	}
-
-	name := pkg.TokenText()
-	if name == "(" {
-		pkg.parseTypes()
-		return
-	}
-
-	pkg.tok = pkg.Scan()
-	// If we drop out at this point, the type is incomplete.
-	if pkg.tok == scanner.EOF {
-		return
-	}
-
-	if pkg.TokenText() == "interface" {
-		pkg.skipInterface()
-		return
-	}
-
-	if pkg.TokenText() == "struct" {
-		st := NewStructure(name, comment)
-		pkg.Structs = append(pkg.Structs, st)
-		pkg.parseFields(st)
-	}
-}
-
-// parseTypes is used to parse multiple types in parentheses.
-// TODO: Actually parse these rather than skipping.
-func (pkg *Package) parseTypes() {
-	parens := 1
-	for pkg.tok = pkg.Scan(); pkg.tok != scanner.EOF && parens > 0; pkg.tok = pkg.Scan() {
-		switch pkg.TokenText() {
-		case "(":
-			parens++
-
-		case ")":
-			parens--
-		}
-	}
-}
-
-// parseFields parses all the fields of a structure.
-func (pkg *Package) parseFields(st *Structure) {
-	pkg.tok = pkg.Scan()
-	if pkg.tok == scanner.EOF {
-		return
-	}
-
-	for pkg.tok = pkg.Scan(); pkg.tok != scanner.EOF && pkg.TokenText() != "}"; pkg.tok = pkg.Scan() {
-		if pkg.TokenText() != "\n" {
-			f := pkg.parseField()
-			if f != nil {
-				st.Fields = append(st.Fields, f)
-			}
-		}
-	}
-}
-
-// parseField parses an individual field, skipping blank lines.
-func (pkg *Package) parseField() *Field {
-	f := &Field{}
-	name := pkg.TokenText()
-	if pkg.tok == scanner.Comment {
-		f.Name = name
-		f.IsComment = true
-		return f
-	}
-	// Probably going to be an embedded struct here
-	if pkg.Peek() == '.' {
-		for pkg.tok = pkg.Scan(); pkg.tok != scanner.EOF && pkg.TokenText() == "." && pkg.TokenText() != "\n"; pkg.tok = pkg.Scan() {
-			pkg.tok = pkg.Scan()
-			if pkg.tok == scanner.EOF {
-				// Malformed struct
-				return nil
-			}
-			name += "." + pkg.TokenText()
-		}
-	}
-
-	// Definitely an embed, so we're done
-	if pkg.TokenText() == "\n" {
-		pkg.tok = pkg.Scan()
-		f.Value = name
-		return f
-	}
-
-	// Not an embed, so what we have so far is the field name
-	f.Name = name
-
-	for pkg.tok = pkg.Scan(); pkg.tok != scanner.EOF; pkg.tok = pkg.Scan() {
-		switch pkg.TokenText() {
-		case "\n":
-			n := strings.Index(f.Value, "`")
-			if n > -1 {
-				t := f.Value[n:len(f.Value)]
-				t = strings.ReplaceAll(t, "`", "")
-				f.parseTags(t)
-				f.Value = f.Value[0:n]
-			}
-			return f
-
-		case "*":
-			if f.IsArray || f.IsMap {
-				f.IsPointerValue = true
-			} else {
-				f.IsPointer = true
-			}
-
-		case "map":
-			f.IsMap = true
-
-		case "[":
-			if f.IsMap {
-				pkg.tok = pkg.Scan()
-				if pkg.tok == scanner.EOF {
-					// Well, that's not right
-					return nil
-				}
-
-				f.Key = pkg.TokenText()
-
-			} else {
-				f.IsArray = true
-			}
-
-		case "]":
-			// Just eat the closing bracket
-
-		case ".":
-			pkg.tok = pkg.Scan()
-			if pkg.tok == scanner.EOF {
-				return nil
-			}
-			f.Value += "." + pkg.TokenText()
-
-		default:
-			f.Value += pkg.TokenText()
-		}
-	}
-
-	// We won't get here very often, if at all
-	return nil
-}
-
-// skipFunc parses past the end of a function since we don't care about those.
-func (pkg *Package) skipFunc() {
-	for pkg.tok = pkg.Scan(); pkg.tok != scanner.EOF && pkg.TokenText() != "{"; pkg.tok = pkg.Scan() {
-	}
-	braces := 1
-	for pkg.tok = pkg.Scan(); pkg.tok != scanner.EOF && braces > 0; pkg.tok = pkg.Scan() {
-		switch pkg.TokenText() {
-		case "{":
-			braces++
-
-		case "}":
-			braces--
-		}
-	}
-}
-
-// skipInterface parses past the end of an interface.
-func (pkg *Package) skipInterface() {
-	for pkg.tok = pkg.Scan(); pkg.tok != scanner.EOF && pkg.TokenText() != "{"; pkg.tok = pkg.Scan() {
-	}
-	braces := 1
-	for pkg.tok = pkg.Scan(); pkg.tok != scanner.EOF && braces > 0; pkg.tok = pkg.Scan() {
-		switch pkg.TokenText() {
-		case "{":
-			braces++
-
-		case "}":
-			braces--
-		}
-	}
-}
-
-// MakeTags for all structures. Unexported fields will be skipped.
-func (pkg *Package) MakeTags(json, omitempty bool) {
-	for _, st := range pkg.Structs {
-		st.MakeTags(json, omitempty)
-	}
-}
-
 func (pkg *Package) String() (string, error) {
 	b := stringer.New()
 	_, err := b.WriteStrings("package ", pkg.Name, "\n\n", "import (\n")
@@ -362,6 +175,11 @@ func (pkg *Package) String() (string, error) {
 			return "", err
 		}
 	}
+
+	for _, f := range pkg.Funcs {
+		b.WriteStrings(f, "\n")
+	}
+
 	return b.String(), nil
 }
 
