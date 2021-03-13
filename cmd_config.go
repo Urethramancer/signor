@@ -117,12 +117,7 @@ func (cmd *CmdConfig) Run(in []string) error {
 		return err
 	}
 
-	s, err := pkg.String()
-	if err != nil {
-		return err
-	}
-
-	_, err = config.WriteStrings(s, "\n")
+	_, err = config.WriteStrings(pkg.String(), "\n")
 	if err != nil {
 		return err
 	}

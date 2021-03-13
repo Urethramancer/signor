@@ -39,11 +39,7 @@ func (cmd *CmdDB) Run(in []string) error {
 	}
 
 	pkg.Name = cmd.Package
-	s, err := pkg.String()
-	if err != nil {
-		return err
-	}
 
-	m("%s", s)
+	m("%s", pkg.String())
 	return nil
 }
