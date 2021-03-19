@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"os"
 	"os/exec"
 	"strings"
@@ -23,7 +22,7 @@ type CmdTravis struct {
 // Run Travis generation.
 func (cmd *CmdTravis) Run(in []string) error {
 	if cmd.Help || len(cmd.Input) == 0 {
-		return errors.New(opt.ErrorUsage)
+		return opt.ErrUsage
 	}
 
 	ver, err := goversion()

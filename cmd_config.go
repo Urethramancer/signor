@@ -51,7 +51,7 @@ type cfgOption struct {
 
 func (cmd *CmdConfig) Run(in []string) error {
 	if cmd.Help || cmd.Input == "" || cmd.Output == "" {
-		return errors.New(opt.ErrorUsage)
+		return opt.ErrUsage
 	}
 
 	if cross.DirExists(cmd.Output) {

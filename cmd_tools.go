@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -31,7 +30,7 @@ type cmdList struct {
 
 func (cmd *CmdTools) Run(in []string) error {
 	if cmd.Help || len(cmd.Commands) == 0 {
-		return errors.New(opt.ErrorUsage)
+		return opt.ErrUsage
 	}
 
 	err := os.MkdirAll(cmd.Output, 0755)

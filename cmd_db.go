@@ -1,8 +1,6 @@
 package main
 
 import (
-	"errors"
-
 	"github.com/Urethramancer/signor/log"
 	"github.com/Urethramancer/signor/opt"
 	"github.com/Urethramancer/signor/structure"
@@ -29,7 +27,7 @@ type CmdDB struct {
 // Run the DB code generator.
 func (cmd *CmdDB) Run(in []string) error {
 	if cmd.Help || cmd.Output == "" {
-		return errors.New(opt.ErrorUsage)
+		return opt.ErrUsage
 	}
 
 	m := log.Default.Msg

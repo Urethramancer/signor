@@ -1,10 +1,6 @@
 package main
 
-import (
-	"errors"
-
-	"github.com/Urethramancer/signor/opt"
-)
+import "github.com/Urethramancer/signor/opt"
 
 // CmdREST generator struct.
 type CmdREST struct {
@@ -20,7 +16,7 @@ type CmdREST struct {
 // Run the REST code generator.
 func (cmd *CmdREST) Run(in []string) error {
 	if cmd.Help || cmd.Output == "" {
-		return errors.New(opt.ErrorUsage)
+		return opt.ErrUsage
 	}
 
 	return nil
