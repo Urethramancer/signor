@@ -19,10 +19,12 @@ type Args struct {
 	commandlist    []*Flag
 	positionalList []*Flag
 	groups         map[string][]*Flag
+	cmdGroups      map[string][]*Flag
 	// groupOrder is in the order of group tags encountered.
-	groupOrder []string
-	Remaining  []string
-	execute    *Flag
+	groupOrder    []string
+	cmdGroupOrder []string
+	Remaining     []string
+	execute       *Flag
 }
 
 const (
@@ -46,6 +48,7 @@ func (a *Args) Usage() {
 	if a.execute != nil {
 		b.WriteStrings(" ", a.execute.Name)
 	}
+
 	if len(a.commandlist) > 0 {
 		b.WriteString(" [COMMAND]")
 	}
@@ -83,9 +86,16 @@ func (a *Args) Usage() {
 	}
 
 	// Commands
-	if len(a.commandlist) > 0 {
-		b.WriteString("\nCommands:\n")
-		for _, f := range a.commandlist {
+	for _, gn := range a.cmdGroupOrder {
+		flags := a.cmdGroups[gn]
+		if gn == noGroup {
+			if len(flags) > 0 {
+				b.WriteString("\nCommands:\n")
+			}
+		} else {
+			b.WriteStrings("\n", gn, ":\n")
+		}
+		for _, f := range flags {
 			fullFieldUsage(&b, f)
 		}
 	}
@@ -114,11 +124,13 @@ func Parse(data interface{}) *Args {
 
 func newArgs(in []string) *Args {
 	a := Args{
-		short:      make(map[string]*Flag),
-		long:       make(map[string]*Flag),
-		commands:   make(map[string]*Flag),
-		groups:     make(map[string][]*Flag),
-		groupOrder: []string{noGroup},
+		short:         make(map[string]*Flag),
+		long:          make(map[string]*Flag),
+		commands:      make(map[string]*Flag),
+		groups:        make(map[string][]*Flag),
+		groupOrder:    []string{noGroup},
+		cmdGroups:     make(map[string][]*Flag),
+		cmdGroupOrder: []string{noGroup},
 	}
 	a.groups[noGroup] = make([]*Flag, 0)
 	return &a
@@ -194,6 +206,8 @@ func (a *Args) parseField(sf reflect.StructField) {
 	// Get boolean options
 	f.parseOpts(sf.Tag.Get("opt"))
 
+	var g []*Flag
+	var ok bool
 	if f.IsCommand {
 		a.commandlist = append(a.commandlist, f)
 		c = sf.Tag.Get("aliases")
@@ -207,9 +221,21 @@ func (a *Args) parseField(sf reflect.StructField) {
 		for _, x := range f.Aliases {
 			a.commands[x] = f
 		}
+
+		if f.Group == "" {
+			g = a.cmdGroups[noGroup]
+			g = append(g, f)
+			a.cmdGroups[noGroup] = g
+		} else {
+			g, ok = a.cmdGroups[f.Group]
+			if !ok {
+				g = make([]*Flag, 0)
+				a.cmdGroupOrder = append(a.cmdGroupOrder, f.Group)
+			}
+			g = append(g, f)
+			a.cmdGroups[f.Group] = g
+		}
 	} else {
-		var g []*Flag
-		var ok bool
 		if f.Long == "" && f.Short == "" && f.Placeholder != "" {
 			a.positionalList = append(a.positionalList, f)
 		} else {
@@ -337,7 +363,7 @@ func isValidChoice(s string, choices []string) bool {
 func (a *Args) parseArg(args []string, f *Flag) []string {
 	if len(f.Choices) > 0 && len(args) > 1 && !isValidChoice(args[0], f.Choices) {
 		def := f.Choices[0]
-		if f.Default != "" {
+		if f.Default == "" {
 			def = f.Default
 		}
 		switch f.field.Kind() {
